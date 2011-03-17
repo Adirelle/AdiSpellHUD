@@ -147,10 +147,19 @@ COOLDOWNS = {
 			[33891] = true, -- Tree of Life
 			[18562] = true, -- Swiftmend
 			[17116] = true, -- Nature's Swiftness
+			[48438] = true, -- Wild Growth
 		},
 	},
 	HUNTER = {
 		['*'] = {
+			[ 5384] = true, -- Feign Death
+			[  781] = true, -- Disengage
+			[34477] = true, -- Misdirection
+			[ 3045] = true, -- Rapid Fire
+			[ 1499] = true, -- Freezing Trap
+			[13813] = true, -- Explosive Trap
+			[19503] = true, -- Scatter Shot
+			[19263] = true, -- Deterrence
 		},
 		-- Beast mastery
 		[1] = {
@@ -160,6 +169,8 @@ COOLDOWNS = {
 		},
 		-- Survival
 		[3] = {
+			[13813] = false, -- Explosive Trap
+			[ 3674] = true, -- Black Arrow			
 		},
 	},
 }
