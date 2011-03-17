@@ -88,11 +88,8 @@ function mod:Update(silent, event)
 	local nextCheck = math.huge
 	local now = GetTime()
 	for spellID, condition in pairs(self.spellsToWatch) do
-		local start, duration = 0, 0
-		if type(condition) ~= "function" or condition(spellID) then
-			start, duration = GetSpellCooldown(spellID)
-		end
-		local timeLeft = max(0, (start and duration and start+duration or 0) - now)
+		local start, duration = GetSpellCooldown(spellID)
+		local timeLeft = max(0, (start and duration and duration > 1.5 and start+duration or 0) - now)
 		if timeLeft > 0 then
 			nextCheck = min(nextCheck, timeLeft)
 			self.cooldowns[spellID] = timeLeft
