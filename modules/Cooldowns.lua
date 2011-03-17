@@ -27,9 +27,9 @@ function mod:OnInitialize()
 	timer:Hide()
 	timer:SetScript('OnUpdate', function(_, elapsed)
 		self.delay = self.delay - elapsed
-		if self.delay <= 0 then
+		if self.delay <= 0 or self.needUpdate then
 			timer:Hide()
-			self:Update(false, "OnTimer")
+			self:Update()
 		end
 	end)
 	self.delay = 0
@@ -105,13 +105,19 @@ end
 
 function mod:OnEnable()
 	wipe(self.cooldowns)
-	self:Update(true, "OnEnable")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:Debug('Enabled')
+	self:Update(true)
 end
 
-function mod:Update(silent, event)
-	self:Debug("Update", event or "OnTimer", silent, self.delay)
+function mod:OnDisable()
+	wipe(self.cooldowns)
+	self.timer:Hide()
+end
+
+function mod:Update(silent)
+	self:Debug("Update", silent)
+	self.needUpdate = nil
 	local nextCheck = math.huge
 	local now = GetTime()
 	for id, model in pairs(self.spellsToWatch) do
@@ -137,7 +143,8 @@ function mod:Update(silent, event)
 end
 
 function mod:SPELL_UPDATE_COOLDOWN()
-	return self:Update(false, "SPELL_UPDATE_COOLDOWN")
+	self.needUpdate = true
+	self.timer:Show()
 end
 
 local AceTimer = LibStub("AceTimer-3.0")
