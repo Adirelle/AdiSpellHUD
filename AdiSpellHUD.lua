@@ -76,3 +76,11 @@ end
 function addon:ChatCommand()
 	InterfaceOptionsFrame_OpenToCategory(self.blizPanel)
 end
+
+--------------------------------------------------------------------------------
+-- Module Prototype
+--------------------------------------------------------------------------------
+
+local moduleProto = { Debug = addon.Debug }
+addon:SetDefaultModulePrototype(moduleProto)
+
