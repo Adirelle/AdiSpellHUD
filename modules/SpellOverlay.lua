@@ -132,11 +132,11 @@ function mod.Overlay_OnUpdate(overlay, elapsed)
 	if overlay.delay > 0 then
 		return
 	end
-	if overlay.timeleft <= 3 then
+	if overlay.timeleft <= 0 then
+		mod.Overlay_OnHide(overlay)
+	elseif overlay.timeleft <= 3 then
 		overlay.delay = overlay.timeleft % 0.1 + 0.01
 		overlay.text:SetFormattedText("%3.1f", overlay.timeleft)
-	elseif overlay.timeleft <= 0 then
-		mod.Overlay_OnHide(overlay)
 	else
 		overlay.delay = overlay.timeleft % 1 + 0.01
 		overlay.text:SetFormattedText("%d", overlay.timeleft)
