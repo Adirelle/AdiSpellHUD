@@ -28,6 +28,8 @@ function mod:OnInitialize()
 	end)
 	self.delay = 0
 	self.timer = timer
+	
+	SpellActivationOverlayFrame.HideOverlays = SpellActivationOverlay_HideOverlays
 end
 
 function mod:CheckActivation(event)
@@ -96,7 +98,7 @@ function mod:Update(silent, event)
 		elseif self.cooldowns[spellID] then
 			self.cooldowns[spellID] = nil
 			if not silent then
-				print(GetSpellInfo(spellID), "has reset !")
+				self:ShowCooldownReset(spellID)
 			end
 		end
 	end
@@ -113,6 +115,11 @@ function mod:SPELL_UPDATE_COOLDOWN()
 	return self:Update(false, "SPELL_UPDATE_COOLDOWN")
 end
 
+local AceTimer = LibStub("AceTimer-3.0")
+function mod:ShowCooldownReset(spellID)
+	local _, _, icon = GetSpellInfo(spellID)
+	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, spellID, icon, "CENTER", 0.5, 255, 255, 255, false, false)
+	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", 0.5, spellID)
 end
 
 COOLDOWNS = {
