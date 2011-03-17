@@ -90,10 +90,14 @@ function mod:CheckActivation(event)
 	local hasSpell = next(spells) ~= nil
 	if event == "OnInitialize" then
 		self:SetEnabledState(hasSpell)
-	elseif hasSpell and not self:IsEnabled() then
-		self:Debug('Enabling')
-		self:Enable()
-	elseif not hasSpell and self:IsEnabled() then
+	elseif hasSpell then
+		if not self:IsEnabled() then
+			self:Debug('Enabling')
+			self:Enable()
+		else
+			self:Update(true)
+		end
+	elseif self:IsEnabled() then
 		self:Debug('Disabling')
 		self:Disable()
 	end
