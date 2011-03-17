@@ -32,6 +32,20 @@ function mod:OnInitialize()
 	SpellActivationOverlayFrame.HideOverlays = SpellActivationOverlay_HideOverlays
 end
 
+local function MergeSpells(dst, src)
+	if src then
+		for spellID, cond in pairs(src) do
+			if not cond then
+				dst[spellID] = nil
+				mod:Debug('Do not watch for', GetSpellInfo(spellID))
+			elseif IsSpellKnown(spellID) then
+				mod:Debug('Watch for', (GetSpellInfo(spellID)))
+				dst[spellID] = cond
+			end
+		end	
+	end
+end
+
 function mod:CheckActivation(event)
 	self:Debug('CheckActivation', event)
 	local primaryTree = GetPrimaryTalentTree()
@@ -45,26 +59,10 @@ function mod:CheckActivation(event)
 	self:Debug('CheckActivation:', class, primaryTree)
 	local spells = self.spellsToWatch
 	wipe(spells)
+	MergeSpells(spells, COOLDOWNS.COMMON)
 	if COOLDOWNS[class] then
-		if COOLDOWNS[class]['*'] then
-			for spellID, cond in pairs(COOLDOWNS[class]['*']) do
-				if IsSpellKnown(spellID) then
-					self:Debug('Watching for', (GetSpellInfo(spellID)))
-					spells[spellID] = cond
-				end
-			end
-		end
-		if COOLDOWNS[class][primaryTree] then
-			for spellID, cond in pairs(COOLDOWNS[class][primaryTree]) do
-				if not cond then
-					spells[spellID] = nil
-					self:Debug('Do not watch for', GetSpellInfo(spellID), 'anymore')
-				elseif IsSpellKnown(spellID) then
-					self:Debug('Watching for', (GetSpellInfo(spellID)))
-					spells[spellID] = cond
-				end
-			end
-		end
+		MergeSpells(spells, COOLDOWNS[class]['*'])
+		MergeSpells(spells, COOLDOWNS[class][primaryTree])
 	end
 	local hasSpell = next(spells) ~= nil
 	if event == "OnInitialize" then
@@ -123,6 +121,43 @@ function mod:ShowCooldownReset(spellID)
 end
 
 COOLDOWNS = {
+	COMMON = {
+		-- Lifeblood (8 ranks)
+		[81780] = true,
+		[55428] = true,
+		[55480] = true,
+		[55500] = true,
+		[55501] = true,
+		[55502] = true,
+		[55503] = true,
+		[74497] = true,
+		-- Racial traits
+		[28730] = true, -- Arcane Torrent (mana)
+		[50613] = true, -- Arcane Torrent (runic power)
+		[80483] = true, -- Arcane Torrent (focus)
+		[25046] = true, -- Arcane Torrent (energy)
+		[69179] = true, -- Arcane Torrent (rage)
+		[26297] = true, -- Berseking
+		[20542] = true, -- Blood Fury (attack power)
+		[33702] = true, -- Blood Fury (spell power)
+		[33697] = true, -- Blood Fury (both)
+		[68992] = true, -- Darkflight
+		[20589] = true, -- Escape Artist
+		[59752] = true, -- Every Man for Himself
+		[69041] = true, -- Rocket Barrage
+		[69070] = true, -- Rocket Jump
+		[58984] = true, -- Shadowmeld
+		[20594] = true, -- Stoneform
+		[20549] = true, -- War Stomp
+		[ 7744] = true, -- Will of the Forsaken
+		[59545] = true, -- Gift of the Naaru
+		[59543] = true, -- Gift of the Naaru
+		[59548] = true, -- Gift of the Naaru
+		[59542] = true, -- Gift of the Naaru
+		[59544] = true, -- Gift of the Naaru
+		[59547] = true, -- Gift of the Naaru
+		[28880] = true, -- Gift of the Naaru
+	},
 	DRUID = {
 		['*'] = {
 			[29166] = true, -- Innervate
@@ -167,9 +202,14 @@ COOLDOWNS = {
 		},
 		-- Beast mastery
 		[1] = {
+			[82726] = true, -- Fervor
+			[19574] = true, -- Bestial Wrath			
+			[19577] = true, -- Intimidation
 		},
 		-- Marksmanship
 		[2] = {
+			[34490] = true, -- Silencing Shot
+			[23989] = true, -- Readiness
 		},
 		-- Survival
 		[3] = {
