@@ -60,9 +60,9 @@ function mod:EnhanceOverlay(overlay)
 	text:Hide()
 	overlay.text = text
 
-	overlay.animIn:GetAnimations():SetDuration(0.5)
+	overlay.animIn:GetAnimations():SetDuration(0.3)
 	local anim = overlay.animIn:CreateAnimation("Scale")
-	anim:SetDuration(0.5)
+	anim:SetDuration(0.3)
 	anim:SetScale(2, 2)
 	anim:SetScript('OnPlay', mod.ScaleIn_OnPlay)
 	anim:SetScript('OnFinished', mod.ScaleIn_OnFinishied)
