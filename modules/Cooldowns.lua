@@ -14,8 +14,8 @@ local mod = addon:NewModule("Cooldowns", "AceEvent-3.0")
 function mod:OnInitialize()
 	self.cooldowns = {}
 	self.spellsToWatch = {}
-	self:SetEnabledState(false)
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.CheckActivation, self)
+	self:CheckActivation("OnInitialize")
 	
 	local timer = CreateFrame("Frame")
 	timer:Hide()
@@ -30,32 +30,48 @@ function mod:OnInitialize()
 	self.timer = timer
 end
 
-function mod:CheckActivation()
+function mod:CheckActivation(event)
+	self:Debug('CheckActivation', event)
 	local primaryTree = GetPrimaryTalentTree()
-	if not primaryTree then return end
+	if not primaryTree then
+		if event == "OnInitialize" then
+			self.RegisterEvent(self.name, "PLAYER_ALIVE", self.CheckActivation, self)
+		end
+		return 
+	end
 	local _, class = UnitClass("player")
+	self:Debug('CheckActivation:', class, primaryTree)
 	local spells = self.spellsToWatch
 	wipe(spells)
 	if COOLDOWNS[class] then
 		if COOLDOWNS[class]['*'] then
 			for spellID, cond in pairs(COOLDOWNS[class]['*']) do
 				if IsSpellKnown(spellID) then
+					self:Debug('Watching for', (GetSpellInfo(spellID)))
 					spells[spellID] = cond
 				end
 			end
 		end
 		if COOLDOWNS[class][primaryTree] then
 			for spellID, cond in pairs(COOLDOWNS[class][primaryTree]) do
-				if IsSpellKnown(spellID) then
+				if not cond then
+					spells[spellID] = nil
+					self:Debug('Do not watch for', GetSpellInfo(spellID), 'anymore')
+				elseif IsSpellKnown(spellID) then
+					self:Debug('Watching for', (GetSpellInfo(spellID)))
 					spells[spellID] = cond
 				end
 			end
 		end
 	end
 	local hasSpell = next(spells) ~= nil
-	if hasSpell and not self:IsEnabled() then
+	if event == "OnInitialize" then
+		self:SetEnabledState(hasSpell)
+	elseif hasSpell and not self:IsEnabled() then
+		self:Debug('Enabling')
 		self:Enable()
 	elseif not hasSpell and self:IsEnabled() then
+		self:Debug('Disabling')
 		self:Disable()
 	end
 end
@@ -64,6 +80,7 @@ function mod:OnEnable()
 	wipe(self.cooldowns)
 	self:Update(true, "OnEnable")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+	self:Debug('Enabled')
 end
 
 function mod:Update(silent, event)
