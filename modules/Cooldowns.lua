@@ -15,6 +15,12 @@ function mod:OnInitialize()
 	self.cooldowns = {}
 	self.spellsToWatch = {}
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.CheckActivation, self)
+	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", function(event, unit)
+		self:Debug(event, unit) 
+		if unit == "player" then 
+			self:CheckActivation(event)
+		end 
+	end)
 	self:CheckActivation("OnInitialize")
 	
 	local timer = CreateFrame("Frame")
@@ -32,6 +38,16 @@ function mod:OnInitialize()
 	SpellActivationOverlayFrame.HideOverlays = SpellActivationOverlay_HideOverlays
 end
 
+local SPELL_MODEL = {
+	GetCooldown = GetSpellCooldown,
+	GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
+}
+
+local ITEM_MODEL = {
+	GetCooldown = GetItemCooldown,
+	GetTexture = function(id) return select(10, GetItemInfo(id)) end,
+}
+
 local function MergeSpells(dst, src)
 	if src then
 		for spellID, cond in pairs(src) do
@@ -40,7 +56,7 @@ local function MergeSpells(dst, src)
 				mod:Debug('Do not watch for', GetSpellInfo(spellID))
 			elseif IsSpellKnown(spellID) then
 				mod:Debug('Watch for', (GetSpellInfo(spellID)))
-				dst[spellID] = cond
+				dst[spellID] = SPELL_MODEL
 			end
 		end	
 	end
@@ -63,6 +79,13 @@ function mod:CheckActivation(event)
 	if COOLDOWNS[class] then
 		MergeSpells(spells, COOLDOWNS[class]['*'])
 		MergeSpells(spells, COOLDOWNS[class][primaryTree])
+	end
+	for index = 1, 18 do
+		local id = GetInventoryItemID("player", index)
+		if id and GetItemSpell(id) then -- Only return values for items with on-use effects
+			self:Debug('Watch for item', (GetItemInfo(id)))
+			spells[id] = ITEM_MODEL
+		end
 	end
 	local hasSpell = next(spells) ~= nil
 	if event == "OnInitialize" then
@@ -87,16 +110,16 @@ function mod:Update(silent, event)
 	self:Debug("Update", event or "OnTimer", silent, self.delay)
 	local nextCheck = math.huge
 	local now = GetTime()
-	for spellID, condition in pairs(self.spellsToWatch) do
-		local start, duration = GetSpellCooldown(spellID)
+	for id, model in pairs(self.spellsToWatch) do
+		local start, duration = model.GetCooldown(id)
 		local timeLeft = max(0, (start and duration and duration > 1.5 and start+duration or 0) - now)
 		if timeLeft > 0 then
 			nextCheck = min(nextCheck, timeLeft)
-			self.cooldowns[spellID] = timeLeft
-		elseif self.cooldowns[spellID] then
-			self.cooldowns[spellID] = nil
+			self.cooldowns[id] = timeLeft
+		elseif self.cooldowns[id] then
+			self.cooldowns[id] = nil
 			if not silent then
-				self:ShowCooldownReset(spellID)
+				self:ShowCooldownReset(id, model.GetTexture(id))
 			end
 		end
 	end
@@ -114,10 +137,9 @@ function mod:SPELL_UPDATE_COOLDOWN()
 end
 
 local AceTimer = LibStub("AceTimer-3.0")
-function mod:ShowCooldownReset(spellID)
-	local _, _, icon = GetSpellInfo(spellID)
-	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, spellID, icon, "CENTER", 0.5, 255, 255, 255, false, false)
-	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", 0.5, spellID)
+function mod:ShowCooldownReset(id, icon)
+	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, id, icon, "CENTER", 0.5, 255, 255, 255, false, false)
+	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", 0.5, id)
 end
 
 COOLDOWNS = {
