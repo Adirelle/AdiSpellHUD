@@ -9,13 +9,25 @@ local L = addon.L
 
 local COOLDOWNS
 
-local mod = addon:NewModule("Cooldonws", "AceEvent-3.0", "AceTimer-3.0")
+local mod = addon:NewModule("Cooldowns", "AceEvent-3.0")
 
 function mod:OnInitialize()
 	self.cooldowns = {}
 	self.spellsToWatch = {}
 	self:SetEnabledState(false)
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.CheckActivation, self)
+	
+	local timer = CreateFrame("Frame")
+	timer:Hide()
+	timer:SetScript('OnUpdate', function(_, elapsed)
+		self.delay = self.delay - elapsed
+		if self.delay <= 0 then
+			timer:Hide()
+			self:Update(false, "OnTimer")
+		end
+	end)
+	self.delay = 0
+	self.timer = timer
 end
 
 function mod:CheckActivation()
@@ -50,17 +62,13 @@ end
 
 function mod:OnEnable()
 	wipe(self.cooldowns)
-	self.timer = nil
-	self:Update(true)
+	self:Update(true, "OnEnable")
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 end
 
-function mod:Update(silent)
-	if self.timer then
-		self:CancelTimer(self.timer, true)
-		self.timer = nil
-	end
-	local nextCheck = 0
+function mod:Update(silent, event)
+	self:Debug("Update", event or "OnTimer", silent, self.delay)
+	local nextCheck = math.huge
 	local now = GetTime()
 	for spellID, condition in pairs(self.spellsToWatch) do
 		local start, duration = 0, 0
@@ -69,7 +77,7 @@ function mod:Update(silent)
 		end
 		local timeLeft = max(0, (start and duration and start+duration or 0) - now)
 		if timeLeft > 0 then
-			nextCheck = max(nextCheck, timeLeft)
+			nextCheck = min(nextCheck, timeLeft)
 			self.cooldowns[spellID] = timeLeft
 		elseif self.cooldowns[spellID] then
 			self.cooldowns[spellID] = nil
@@ -78,13 +86,19 @@ function mod:Update(silent)
 			end
 		end
 	end
-	if nextCheck > 0 then
-		self.timer = self:ScheduleTimer("Update", nextCheck+0.1)
+	if nextCheck > 0 and nextCheck < math.huge then
+		self.delay = nextCheck + 0.1
+		self:Debug('Next update in', self.delay)
+		self.timer:Show()
+	else
+		self.timer:Hide()
 	end
 end
 
 function mod:SPELL_UPDATE_COOLDOWN()
-	return self:Update()
+	return self:Update(false, "SPELL_UPDATE_COOLDOWN")
+end
+
 end
 
 COOLDOWNS = {
