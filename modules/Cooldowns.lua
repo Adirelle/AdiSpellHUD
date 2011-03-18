@@ -181,7 +181,7 @@ function mod:Update(silent)
 				running[id] = timeLeft
 			elseif running[id] then
 				running[id] = nil
-				if not silent then
+				if not silent and enabled[id] then
 					self:ShowCooldownReset(id, GetTexture(id))
 				end
 			end
