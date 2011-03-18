@@ -15,6 +15,9 @@ local COOLDOWNS
 
 local DEFAULT_SETTINGS = {
 	profile = {
+		minDuration = 2,
+		scale = 0.5,
+		pulseDuration = 0.5,
 		spells = { ['*'] = true },
 		items = { ['*'] = true },
 	}
@@ -170,12 +173,13 @@ function mod:Update(silent)
 	self.needUpdate = nil
 	local nextCheck = math.huge
 	local now = GetTime()
+	local minDuration = prefs.minDuration
 	local running = self.runningCooldowns
 	for model, ids in pairs(self.cooldownsToWatch) do
 		local GetCooldown, GetTexture = MODELS[model].GetCooldown, MODELS[model].GetTexture
 		for id in pairs(ids) do
 			local start, duration = GetCooldown(id)
-			local timeLeft = max(0, (start and duration and duration > 1.5 and start+duration or 0) - now)
+			local timeLeft = max(0, (start and duration and duration >= minDuration and start+duration or 0) - now)
 			if timeLeft > 0 then
 				nextCheck = min(nextCheck, timeLeft)
 				running[id] = timeLeft
@@ -203,8 +207,8 @@ end
 
 local AceTimer = LibStub("AceTimer-3.0")
 function mod:ShowCooldownReset(id, icon)
-	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, id, icon, "CENTER", 0.5, 255, 255, 255, false, false)
-	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", 0.5, id)
+	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, id, icon, "CENTER", prefs.scale, 255, 255, 255, false, false)
+	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", prefs.pulseDuration, id)
 end
 
 --------------------------------------------------------------------------------
@@ -231,20 +235,51 @@ function mod:GetOptions()
 
 	return {
 		args = {
+			minDuration = {
+				name = L['Minimum duration (sec.)'],
+				desc = L['Any cooldown with a duration lower than that value is ignored, whether it is enabled or not.'],
+				order = 10,
+				type = 'range',
+				min = 2,
+				max = 60,
+				step = 0.5,
+				bigStep = 1,
+			},
 			spells = {
-				name = L['Spells'],
+				name = L['Monitored spells'],
+				desc = L['Select which spells should be monitored.'],
+				order = 20,
 				type = 'multiselect',
 				values = ListValues,
 				hidden = HasNoValue,
-				order = 10,
 			},
 			items = {
-				name = L['Items'],
+				name = L['Monitored items'],
+				desc = L['Select which equipped items should be monitored.'],
+				order = 30,
 				type = 'multiselect',
 				values = ListValues,
 				hidden = HasNoValue,
-				order = 20,
-			}
+			},
+			scale = {
+				name = L['Icon scale'],
+				type = 'range',
+				order = 40,
+				isPercent = true,
+				min = 0.01,
+				max = 3.0,
+				step = 0.01,
+				bigStep = 0.1,
+			},
+			pulseDuration = {
+				name = L['Pulse duration (sec.)'],
+				desc = L['How long will the icon keeps pulsing on screen.'],
+				order = 50,
+				min = 0,
+				max = 5,
+				step = 0.1,
+				bigStep = 0.5,
+			},
 		}
 	}
 end
