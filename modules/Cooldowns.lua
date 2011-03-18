@@ -5,24 +5,56 @@ All rights reserved.
 --]]
 
 local addonName, addon = ...
-local L = addon.L
+local mod = addon:NewModule("Cooldowns", "AceEvent-3.0")
+
+--------------------------------------------------------------------------------
+-- Consts and upvalues
+--------------------------------------------------------------------------------
 
 local COOLDOWNS
 
-local mod = addon:NewModule("Cooldowns", "AceEvent-3.0")
+local DEFAULT_SETTINGS = {
+	profile = {
+		spells = { ['*'] = true },
+		items = { ['*'] = true },
+	}
+}
+
+local MODELS = {
+	spells = {
+		GetInfo = function(id)
+			local name, _, texture = GetSpellInfo(id)
+			return name, texture
+		end,
+		GetCooldown = GetSpellCooldown,
+		GetTexture = function(id) return select(3, GetItemInfo(id)) end,
+	},
+	items = {
+		GetInfo = function(id)
+			local name, _, _, _, _, _, _, _, _, texture = GetItemInfo(id)
+			return name, texture
+		end,
+		GetCooldown = GetItemCooldown,
+		GetTexture = function(id) return select(10, GetItemInfo(id)) end,
+	},
+}
+
+local prefs
+
+--------------------------------------------------------------------------------
+-- Initialization
+--------------------------------------------------------------------------------
 
 function mod:OnInitialize()
-	self.cooldowns = {}
-	self.spellsToWatch = {}
-	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.CheckActivation, self)
-	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", function(event, unit)
-		self:Debug(event, unit) 
-		if unit == "player" then 
-			self:CheckActivation(event)
-		end 
-	end)
+	self.db = addon.db:RegisterNamespace(self.moduleName, DEFAULT_SETTINGS)
+	prefs = self.db.profile
+
+	self.runningCooldowns = {}
+	self.cooldownsToWatch = {}
+	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
+	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UpdateEnabledState, self)
 	self:CheckActivation("OnInitialize")
-	
+
 	local timer = CreateFrame("Frame")
 	timer:Hide()
 	timer:SetScript('OnUpdate', function(_, elapsed)
@@ -34,19 +66,13 @@ function mod:OnInitialize()
 	end)
 	self.delay = 0
 	self.timer = timer
-	
+
 	SpellActivationOverlayFrame.HideOverlays = SpellActivationOverlay_HideOverlays
 end
 
-local SPELL_MODEL = {
-	GetCooldown = GetSpellCooldown,
-	GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
-}
-
-local ITEM_MODEL = {
-	GetCooldown = GetItemCooldown,
-	GetTexture = function(id) return select(10, GetItemInfo(id)) end,
-}
+--------------------------------------------------------------------------------
+-- Testing enable state
+--------------------------------------------------------------------------------
 
 local function MergeSpells(dst, src)
 	if src then
@@ -56,41 +82,49 @@ local function MergeSpells(dst, src)
 				mod:Debug('Do not watch for', GetSpellInfo(spellID))
 			elseif IsSpellKnown(spellID) then
 				mod:Debug('Watch for', (GetSpellInfo(spellID)))
-				dst[spellID] = SPELL_MODEL
+				dst[spellID] = true
 			end
-		end	
+		end
 	end
 end
 
-function mod:CheckActivation(event)
+function mod:UpdateEnabledState(event)
 	self:Debug('CheckActivation', event)
 	local primaryTree = GetPrimaryTalentTree()
 	if not primaryTree then
 		if event == "OnInitialize" then
-			self.RegisterEvent(self.name, "PLAYER_ALIVE", self.CheckActivation, self)
+			self.RegisterEvent(self.name, "PLAYER_ALIVE", self.UpdateEnabledState, self)
 		end
-		return 
+		return
 	end
 	local _, class = UnitClass("player")
 	self:Debug('CheckActivation:', class, primaryTree)
-	local spells = self.spellsToWatch
-	wipe(spells)
-	MergeSpells(spells, COOLDOWNS.COMMON)
-	if COOLDOWNS[class] then
-		MergeSpells(spells, COOLDOWNS[class]['*'])
-		MergeSpells(spells, COOLDOWNS[class][primaryTree])
-	end
-	for index = 1, 18 do
-		local id = GetInventoryItemID("player", index)
-		if id and GetItemSpell(id) then -- Only return values for items with on-use effects
-			self:Debug('Watch for item', (GetItemInfo(id)))
-			spells[id] = ITEM_MODEL
+
+	local cooldownsToWatch = self.cooldownsToWatch
+	local spells = wipe(cooldownsToWatch.spells or {})
+	local items = wipe(cooldownsToWatch.items or {})
+
+	if prefs.enabled then
+		MergeSpells(spells, COOLDOWNS.COMMON)
+		if COOLDOWNS[class] then
+			MergeSpells(spells, COOLDOWNS[class]['*'])
+			MergeSpells(spells, COOLDOWNS[class][primaryTree])
+		end
+		for index = 1, 18 do
+			local id = GetInventoryItemID("player", index)
+			if id and GetItemSpell(id) then -- Only return values for items with on-use effects
+				self:Debug('Watch for item', (GetItemInfo(id)))
+				items[id] = true
+			end
 		end
 	end
-	local hasSpell = next(spells) ~= nil
+	cooldownsToWatch.spells = next(spells) and spells
+	cooldownsToWatch.items = next(items) and items
+		
+	local enable = (cooldownsToWatch.spells or cooldownsToWatch.items) ~= nil
 	if event == "OnInitialize" then
-		self:SetEnabledState(hasSpell)
-	elseif hasSpell then
+		self:SetEnabledState(enable)
+	elseif enable then
 		if not self:IsEnabled() then
 			self:Debug('Enabling')
 			self:Enable()
@@ -103,33 +137,52 @@ function mod:CheckActivation(event)
 	end
 end
 
+function mod:UNIT_INVENTORY_CHANGED(event, unit)
+	self:Debug(event, unit)
+	if unit == "player" then
+		self:UpdateEnabledState(event)
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Enabling/disabling
+--------------------------------------------------------------------------------
+
 function mod:OnEnable()
-	wipe(self.cooldowns)
+	prefs = self.db.profile
+	wipe(self.runningCooldowns)
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:Debug('Enabled')
 	self:Update(true)
 end
 
 function mod:OnDisable()
-	wipe(self.cooldowns)
 	self.timer:Hide()
 end
+
+--------------------------------------------------------------------------------
+-- Monitoring and feedback
+--------------------------------------------------------------------------------
 
 function mod:Update(silent)
 	self:Debug("Update", silent)
 	self.needUpdate = nil
 	local nextCheck = math.huge
 	local now = GetTime()
-	for id, model in pairs(self.spellsToWatch) do
-		local start, duration = model.GetCooldown(id)
-		local timeLeft = max(0, (start and duration and duration > 1.5 and start+duration or 0) - now)
-		if timeLeft > 0 then
-			nextCheck = min(nextCheck, timeLeft)
-			self.cooldowns[id] = timeLeft
-		elseif self.cooldowns[id] then
-			self.cooldowns[id] = nil
-			if not silent then
-				self:ShowCooldownReset(id, model.GetTexture(id))
+	local running = self.runningCooldowns
+	for model, ids in pairs(self.cooldownsToWatch) do
+		local GetCooldown, GetTexture = MODELS[model].GetCooldown, MODELS[model].GetTexture
+		for id in pairs(ids) do
+			local start, duration = GetCooldown(id)
+			local timeLeft = max(0, (start and duration and duration > 1.5 and start+duration or 0) - now)
+			if timeLeft > 0 then
+				nextCheck = min(nextCheck, timeLeft)
+				running[id] = timeLeft
+			elseif running[id] then
+				running[id] = nil
+				if not silent then
+					self:ShowCooldownReset(id, GetTexture(id))
+				end
 			end
 		end
 	end
@@ -152,6 +205,52 @@ function mod:ShowCooldownReset(id, icon)
 	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, id, icon, "CENTER", 0.5, 255, 255, 255, false, false)
 	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", 0.5, id)
 end
+
+--------------------------------------------------------------------------------
+-- Options
+--------------------------------------------------------------------------------
+
+function mod:GetOptions()
+	local L = addon.L
+
+	local function HasNoValue(info)
+		return not next(self.cooldownsToWatch[info[#info]])
+	end
+
+	local values = {}
+	local function ListValues(info)
+		local GetInfo = MODELS[info[#info]].GetInfo
+		wipe(values)
+		for id in pairs(self.cooldownsToWatch[model]) do
+			local name, texture = GetInfo(id)
+			values[id] = format("|T%s:24|t %s", texture, name)
+		end
+		return values
+	end
+
+	return {
+		args = {
+			spells = {
+				name = L['Spells'],
+				type = 'multiselect',
+				values = ListValues,
+				hidden = HasNoValue,
+				order = 10,
+			},
+			items = {
+				name = L['Items'],
+				type = 'multiselect',
+				values = ListValues,
+				hidden = HasNoValue,
+				order = 20,
+			}
+		}
+	}
+end
+
+--------------------------------------------------------------------------------
+-- The database of spells to monitor
+--------------------------------------------------------------------------------
 
 COOLDOWNS = {
 	COMMON = {
@@ -236,7 +335,7 @@ COOLDOWNS = {
 		-- Beast mastery
 		[1] = {
 			[82726] = true, -- Fervor
-			[19574] = true, -- Bestial Wrath			
+			[19574] = true, -- Bestial Wrath
 			[19577] = true, -- Intimidation
 		},
 		-- Marksmanship
@@ -247,7 +346,7 @@ COOLDOWNS = {
 		-- Survival
 		[3] = {
 			[13813] = false, -- Explosive Trap
-			[ 3674] = true, -- Black Arrow			
+			[ 3674] = true, -- Black Arrow
 		},
 	},
 }

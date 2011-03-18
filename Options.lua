@@ -41,7 +41,9 @@ function handlerProto:Set(info, ...)
 	else
 		db[key] = ...
 	end
-	addon:SendMessage('AdiProx_ConfigChanged_'..self.target.name, key, ...)
+	if self.target.OnConfigChanged then
+		self.target:OnConfigChanged(key, ...)
+	end
 end
 
 local function DecorateOptions(target, options)
