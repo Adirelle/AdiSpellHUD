@@ -32,6 +32,7 @@ end
 
 local DEFAULT_SETTINGS = {
 	profile = {
+		modules = { ['*'] = true },
 	}
 }
 
@@ -63,6 +64,10 @@ end
 
 function addon:OnEnable()
 	prefs = self.db.profile
+	
+	for name, module in self:IterateModules() do
+		module:SetEnabledState(prefs.modules[module.name])
+	end
 end
 
 function addon:Reconfigure()

@@ -30,7 +30,7 @@ local MODELS = {
 			return name, texture
 		end,
 		GetCooldown = GetSpellCooldown,
-		GetTexture = function(id) return select(3, GetItemInfo(id)) end,
+		GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
 	},
 	items = {
 		GetInfo = function(id)
@@ -57,7 +57,7 @@ function mod:OnInitialize()
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "SPELLS_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UNIT_INVENTORY_CHANGED, self)
-	self:CheckActivation("OnInitialize")
+	self:UpdateEnabledState("OnInitialize")
 
 	local timer = CreateFrame("Frame")
 	timer:Hide()
@@ -93,11 +93,16 @@ local function MergeSpells(dst, src)
 end
 
 function mod:UpdateEnabledState(event)
-	self:Debug('CheckActivation', event)
+	self:Debug('UpdateEnabledState', event)
 	local primaryTree = GetPrimaryTalentTree()
 	if not primaryTree then
 		if event == "OnInitialize" then
-			self.RegisterEvent(self.name, "PLAYER_ALIVE", self.UpdateEnabledState, self)
+			self.RegisterEvent(self.name, "PLAYER_ALIVE", function(event)
+				if GetPrimaryTalentTree() then
+					self.UnregisterEvent(self.name, "PLAYER_ALIVE")
+				 	return self:UpdateEnabledState(event)
+				end
+			end)
 		end
 		return
 	end
@@ -108,7 +113,7 @@ function mod:UpdateEnabledState(event)
 	local spells = wipe(cooldownsToWatch.spells or {})
 	local items = wipe(cooldownsToWatch.items or {})
 
-	if prefs.enabled then
+	if addon.db.profile.modules[self.name] then
 		MergeSpells(spells, COOLDOWNS.COMMON)
 		if COOLDOWNS[class] then
 			MergeSpells(spells, COOLDOWNS[class]['*'])
@@ -164,6 +169,10 @@ function mod:OnDisable()
 	self.timer:Hide()
 end
 
+function mod:OnConfigChanged()
+	self:Update(true)
+end
+
 --------------------------------------------------------------------------------
 -- Monitoring and feedback
 --------------------------------------------------------------------------------
@@ -176,7 +185,7 @@ function mod:Update(silent)
 	local minDuration = prefs.minDuration
 	local running = self.runningCooldowns
 	for model, ids in pairs(self.cooldownsToWatch) do
-		local GetCooldown, GetTexture = MODELS[model].GetCooldown, MODELS[model].GetTexture
+		local GetCooldown, GetTexture, enabled = MODELS[model].GetCooldown, MODELS[model].GetTexture, prefs[model]
 		for id in pairs(ids) do
 			local start, duration = GetCooldown(id)
 			local timeLeft = max(0, (start and duration and duration >= minDuration and start+duration or 0) - now)
@@ -219,12 +228,13 @@ function mod:GetOptions()
 	local L = addon.L
 
 	local function HasNoValue(info)
-		return not next(self.cooldownsToWatch[info[#info]])
+		return not self.cooldownsToWatch[info[#info]]
 	end
 
 	local values = {}
 	local function ListValues(info)
-		local GetInfo = MODELS[info[#info]].GetInfo
+		local model = info[#info]
+		local GetInfo = MODELS[model].GetInfo
 		wipe(values)
 		for id in pairs(self.cooldownsToWatch[model]) do
 			local name, texture = GetInfo(id)
@@ -274,6 +284,7 @@ function mod:GetOptions()
 			pulseDuration = {
 				name = L['Pulse duration (sec.)'],
 				desc = L['How long will the icon keeps pulsing on screen.'],
+				type = 'range',
 				order = 50,
 				min = 0,
 				max = 5,
