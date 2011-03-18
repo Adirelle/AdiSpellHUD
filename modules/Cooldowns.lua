@@ -52,7 +52,8 @@ function mod:OnInitialize()
 	self.runningCooldowns = {}
 	self.cooldownsToWatch = {}
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
-	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UpdateEnabledState, self)
+	self.RegisterEvent(self.name, "SPELLS_CHANGED", self.UpdateEnabledState, self)
+	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UNIT_INVENTORY_CHANGED, self)
 	self:CheckActivation("OnInitialize")
 
 	local timer = CreateFrame("Frame")
