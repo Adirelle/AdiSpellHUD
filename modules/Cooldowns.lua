@@ -16,8 +16,8 @@ local COOLDOWNS
 local DEFAULT_SETTINGS = {
 	profile = {
 		minDuration = 2,
-		scale = 0.5,
-		pulseDuration = 0.5,
+		size = 96,
+		alpha = 0.75,
 		spells = { ['*'] = true },
 		items = { ['*'] = true },
 	}
@@ -54,24 +54,14 @@ function mod:OnInitialize()
 
 	self.runningCooldowns = {}
 	self.cooldownsToWatch = {}
+	
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "SPELLS_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UNIT_INVENTORY_CHANGED, self)
 	self:UpdateEnabledState("OnInitialize")
 
-	local timer = CreateFrame("Frame")
-	timer:Hide()
-	timer:SetScript('OnUpdate', function(_, elapsed)
-		self.delay = self.delay - elapsed
-		if self.delay <= 0 or self.needUpdate then
-			timer:Hide()
-			self:Update()
-		end
-	end)
-	self.delay = 0
-	self.timer = timer
-
-	SpellActivationOverlayFrame.HideOverlays = SpellActivationOverlay_HideOverlays
+	self.unusedOverlays = {}
+	self.overlaysInUse = {}
 end
 
 --------------------------------------------------------------------------------
@@ -160,6 +150,29 @@ end
 function mod:OnEnable()
 	prefs = self.db.profile
 	wipe(self.runningCooldowns)
+
+	if not self.timer then
+		local timer = CreateFrame("Frame")
+		timer:Hide()
+		timer:SetScript('OnUpdate', function(_, elapsed)
+			self.delay = self.delay - elapsed
+			if self.delay <= 0 or self.needUpdate then
+				timer:Hide()
+				self:Update()
+			end
+		end)
+		self.delay = 0
+		self.timer = timer
+	end
+	
+	if not self.frame then
+		local frame = CreateFrame("Frame", nil, UIParent)
+		frame:SetPoint("CENTER")
+		frame:SetSize(prefs.size, prefs.size)
+		frame:SetAlpha(prefs.alpha)
+		self.frame = frame
+	end		
+	
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:Debug('Enabled')
 	self:Update(true)
@@ -167,9 +180,15 @@ end
 
 function mod:OnDisable()
 	self.timer:Hide()
+	self.frame:Hide()
 end
 
 function mod:OnConfigChanged()
+	local frame = self.frame
+	if frame then
+		frame:SetSize(prefs.size, prefs.size)
+		frame:SetAlpha(prefs.alpha)
+	end
 	self:Update(true)
 end
 
@@ -214,10 +233,98 @@ function mod:SPELL_UPDATE_COOLDOWN()
 	self.timer:Show()
 end
 
-local AceTimer = LibStub("AceTimer-3.0")
 function mod:ShowCooldownReset(id, icon)
-	SpellActivationOverlay_ShowOverlay(SpellActivationOverlayFrame, id, icon, "CENTER", prefs.scale, 255, 255, 255, false, false)
-	AceTimer.ScheduleTimer(SpellActivationOverlayFrame, "HideOverlays", prefs.pulseDuration, id)
+	local overlay = self:GetOverlay(id)
+	overlay.texture:SetTexture(icon)
+	overlay:Show()
+end
+
+--------------------------------------------------------------------------------
+-- Widget handling
+--------------------------------------------------------------------------------
+
+local function Overlay_OnShow(overlay)
+	mod:Debug('Overlay_OnShow', overlay)
+	overlay.animation:Stop()
+	overlay.animation:Play()
+end
+
+local function FadeIn_OnPlay(anim)
+	mod:Debug('FadeIn_OnPlay', anim)
+	anim:GetRegionParent():SetAlpha(0)
+end
+
+local function FadeIn_OnFinished(anim)
+	mod:Debug('FadeIn_OnFinished', anim)
+	anim:GetRegionParent():SetAlpha(1)
+end
+
+local function Animation_OnFinished(animation)
+	mod:Debug('Animation_OnFinished', animation)
+	local overlay = animation:GetParent()
+	overlay:Hide()
+	mod.overlaysInUse[overlay.id] = nil
+	mod.unusedOverlays[overlay] = true
+end
+
+function mod:CreateOverlay()
+	local overlay = CreateFrame("Frame", nil, self.frame)
+	overlay:SetAllPoints(self.frame)
+	overlay:Hide()
+	
+	overlay:SetScript('OnShow', Overlay_OnShow)
+
+	local texture = overlay:CreateTexture(nil, "OVERLAY")
+	texture:SetAllPoints(overlay)
+	texture:SetTexCoord(5/64, 59/64, 5/64, 59/64)
+	overlay.texture = texture
+	
+	local animation = overlay:CreateAnimationGroup()
+	animation:SetScript('OnFinished', Animation_OnFinished)
+	overlay.animation = animation
+	
+	local fadeIn = animation:CreateAnimation("Alpha")
+	fadeIn:SetOrder(1)
+	fadeIn:SetDuration(0.5)
+	fadeIn:SetChange(1)
+	fadeIn:SetScript('OnPlay', FadeIn_OnPlay)
+	fadeIn:SetScript('OnFinished', FadeIn_OnFinished)
+	fadeIn:SetSmoothing("OUT")
+	
+	local scaleIn = animation:CreateAnimation("Scale")
+	scaleIn:SetOrder(1)
+	scaleIn:SetDuration(0.5)
+	scaleIn:SetScale(2, 2)
+	scaleIn:SetSmoothing("OUT")
+	
+	local fadeOut = animation:CreateAnimation("Alpha")
+	fadeOut:SetOrder(2)
+	fadeOut:SetDuration(0.5)
+	fadeOut:SetChange(-1)
+	fadeOut:SetSmoothing("IN")
+
+	local scaleOut = animation:CreateAnimation("Scale")
+	scaleOut:SetOrder(2)
+	scaleOut:SetDuration(0.5)
+	scaleOut:SetScale(2, 2)
+	scaleOut:SetSmoothing("IN")
+	
+	return overlay
+end
+
+function mod:GetOverlay(id)
+	local overlay = self.overlaysInUse[id]
+	if not overlay then
+		overlay = next(self.unusedOverlays)
+		if overlay then
+			self.unusedOverlays[overlay] = nil
+		else
+			overlay = self:CreateOverlay()
+		end
+	end
+	self.overlaysInUse[id] = overlay
+	overlay.id = id
+	return overlay
 end
 
 --------------------------------------------------------------------------------
@@ -271,25 +378,34 @@ function mod:GetOptions()
 				values = ListValues,
 				hidden = HasNoValue,
 			},
-			scale = {
-				name = L['Icon scale'],
+			size = {
+				name = L['Size'],
 				type = 'range',
 				order = 40,
+				min = 16,
+				max = 256,
+				step = 1,
+				bigStep = 8,
+			},
+			alpha = {
+				name = L['Opacity'],
+				type = 'range',
+				order = 50,
 				isPercent = true,
 				min = 0.01,
-				max = 3.0,
+				max = 1.0,
 				step = 0.01,
 				bigStep = 0.1,
 			},
-			pulseDuration = {
-				name = L['Pulse duration (sec.)'],
-				desc = L['How long will the icon keeps pulsing on screen.'],
-				type = 'range',
-				order = 50,
-				min = 0,
-				max = 5,
-				step = 0.1,
-				bigStep = 0.5,
+			test = {
+				name = L['Test'],
+				type = 'execute',
+				order = 60,
+				func = function()
+					local i = math.random(1, 8)
+					mod:ShowCooldownReset(-i, format([[Interface\Icons\INV_Misc_Gear_%02d]], i))
+				end,
+				disabled = function() return not mod:IsEnabled() end,
 			},
 		}
 	}
