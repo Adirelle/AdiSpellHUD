@@ -89,3 +89,16 @@ end
 local moduleProto = { Debug = addon.Debug }
 addon:SetDefaultModulePrototype(moduleProto)
 
+function moduleProto:ShouldEnable()
+	return prefs.modules[self.name]
+end
+
+function moduleProto:UpdateEnabledState()
+	local enable = self:ShouldEnable()
+	if enable and not self:IsEnabled() then
+		self:Enable()
+	elseif not enable and self:IsEnabled() then
+		self:Disable()
+	end
+end
+
