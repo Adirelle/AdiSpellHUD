@@ -7,25 +7,50 @@ All rights reserved.
 local addonName, addon = ...
 local L = addon.L
 
-local mod = addon:NewModule("SpellOverlay", "AceEvent-3.0", "AceHook-3.0")
+local mod = addon:NewModule("SpellOverlay", "AceEvent-3.0", "AceHook-3.0", "LibMovable-1.0")
+
+local frame = SpellActivationOverlayFrame
+
+local DEFAULT_SETTINGS = {
+	profile = {
+		anchor = {}
+	}
+}
 
 function mod:OnInitialize()
+	local t = DEFAULT_SETTINGS.profile.anchor
+	t.scale, t.pointFrom, t.refFrame, t.pointTo, t.xOffset, t.yOffset = frame:GetScale(), frame:GetPoint()
+	
+	self.db = addon.db:RegisterNamespace(self.name, DEFAULT_SETTINGS)
+	
 	self.enhancedOverlays = {}
+
+	self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L["Blizzard Spell Overlay"], function(target)
+		local anchor = CreateFrame("Frame", nil, target)
+		anchor:SetPoint("CENTER")
+		anchor:SetSize(460, 460)
+		return anchor
+	end)
+	self:SetMovable(frame, false)
 end
 
 function mod:OnEnable()
-	for i, overlay in pairs(SpellActivationOverlayFrame.unusedOverlays) do
+	for i, overlay in pairs(frame.unusedOverlays) do
 		self:EnhanceOverlay(overlay)
 	end
-	for spell, overlays in pairs(SpellActivationOverlayFrame.overlaysInUse) do
+	for spell, overlays in pairs(frame.overlaysInUse) do
 		for i, overlay in pairs(overlays) do
 			self:EnhanceOverlay(overlay)
 		end
 	end
 	self:RawHook('SpellActivationOverlay_CreateOverlay', true)
 	self:RegisterEvent('UNIT_AURA')
-
+	
 	self:UpdateOverlaysInUse()
+end
+
+function mod:GetOptions()
+	return {}
 end
 
 function mod:SpellActivationOverlay_CreateOverlay(...)
@@ -77,14 +102,14 @@ end
 
 local seen = {}
 function mod:UpdateOverlaysInUse()
-	local overlays = SpellActivationOverlayFrame.overlaysInUse
+	local overlays = frame.overlaysInUse
 	wipe(seen)
 	for index = 1, math.huge do
 		local name, _, _, count, _, duration, expires, _, _, _, spellID = UnitBuff("player", index)
 		if not name then break end
 		if spellID then
 			seen[spellID] = true
-			local overlays = SpellActivationOverlayFrame.overlaysInUse[spellID]
+			local overlays = frame.overlaysInUse[spellID]
 			if overlays then
 				for i, overlay in pairs(overlays) do
 					self:UpdateOverlay(overlay, duration, expires, count)
@@ -92,7 +117,7 @@ function mod:UpdateOverlaysInUse()
 			end
 		end
 	end
-	for spellID, overlays in pairs(SpellActivationOverlayFrame.overlaysInUse) do
+	for spellID, overlays in pairs(frame.overlaysInUse) do
 		if not seen[spellID]then
 			for i, overlay in pairs(overlays) do
 				self:UpdateOverlay(overlay)
@@ -175,3 +200,4 @@ end
 
 function mod.ScaleOut_OnFinished(anim)
 end
+
