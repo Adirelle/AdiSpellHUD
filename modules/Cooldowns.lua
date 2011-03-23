@@ -5,7 +5,7 @@ All rights reserved.
 --]]
 
 local addonName, addon = ...
-local mod = addon:NewModule("Cooldowns", "AceEvent-3.0")
+local mod = addon:NewModule("Cooldowns", "AceEvent-3.0", "LibMovable-1.0")
 
 --------------------------------------------------------------------------------
 -- Consts and upvalues
@@ -20,6 +20,7 @@ local DEFAULT_SETTINGS = {
 		alpha = 0.75,
 		spells = { ['*'] = true },
 		items = { ['*'] = true },
+		anchor = { }
 	}
 }
 
@@ -170,8 +171,9 @@ function mod:OnEnable()
 		frame:SetPoint("CENTER")
 		frame:SetSize(prefs.size, prefs.size)
 		frame:SetAlpha(prefs.alpha)
-		self.frame = frame
-	end		
+		self.frame = frame		
+		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Cooldown Icon"])
+	end
 	
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:Debug('Enabled')
