@@ -171,6 +171,7 @@ function mod:OnEnable()
 		frame:SetPoint("CENTER")
 		frame:SetSize(prefs.size, prefs.size)
 		frame:SetAlpha(prefs.alpha)
+		frame:SetClampedToScreen(true)
 		self.frame = frame		
 		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Cooldown Icon"])
 	end
@@ -409,6 +410,20 @@ function mod:GetOptions()
 				end,
 				disabled = function() return not mod:IsEnabled() end,
 			},
+			unlock = {
+				name = function()
+					return self:AreMovablesLocked() and L["Unlock"] or L["Lock"]
+				end,
+				type = 'execute',
+				order = 70,
+				func = function()
+					if self:AreMovablesLocked() then
+						self:UnlockMovables()
+					else
+						self:LockMovables()
+					end
+				end,
+			}
 		}
 	}
 end

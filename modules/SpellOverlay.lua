@@ -32,6 +32,7 @@ function mod:OnInitialize()
 		return anchor
 	end)
 	self:SetMovable(frame, false)
+	frame:SetClampedToScreen(true)
 end
 
 function mod:OnEnable()
@@ -50,7 +51,23 @@ function mod:OnEnable()
 end
 
 function mod:GetOptions()
-	return {}
+	return {
+		args = {
+			unlock = {
+				name = function()
+					return self:AreMovablesLocked() and L["Unlock"] or L["Lock"]
+				end,
+				type = 'execute',
+				func = function()
+					if self:AreMovablesLocked() then
+						self:UnlockMovables()
+					else
+						self:LockMovables()
+					end
+				end,
+			}
+		}
+	}
 end
 
 function mod:SpellActivationOverlay_CreateOverlay(...)
@@ -200,4 +217,3 @@ end
 
 function mod.ScaleOut_OnFinished(anim)
 end
-
