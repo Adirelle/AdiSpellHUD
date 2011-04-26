@@ -28,14 +28,18 @@ local MODELS = {
 	spells = {
 		GetInfo = function(id)
 			local name, _, texture = GetSpellInfo(id)
-			return name, texture
+			if mod.petSpells[id] then
+				return format("%s (%s)", name, UnitName("pet")), texture
+			else
+				return name, texture
+			end
 		end,
 		GetCooldown = GetSpellCooldown, 
 		GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
 		IsMuted = function(id)
 			local index = mod.petSpells[id]
 			return index and select(2, GetSpellAutocast(index, "pet"))
-		end,
+		end,		
 	},
 	items = {
 		GetInfo = function(id)
