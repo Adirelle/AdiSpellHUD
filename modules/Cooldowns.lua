@@ -192,7 +192,9 @@ function mod:OnConfigChanged()
 		frame:SetSize(prefs.size, prefs.size)
 		frame:SetAlpha(prefs.alpha)
 	end
-	self:Update(true)
+	if self:IsEnabled() then
+		self:Update(true)
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -200,6 +202,7 @@ end
 --------------------------------------------------------------------------------
 
 function mod:Update(silent)
+	if not self.timer then return end
 	self:Debug("Update", silent)
 	self.needUpdate = nil
 	local nextCheck = math.huge
