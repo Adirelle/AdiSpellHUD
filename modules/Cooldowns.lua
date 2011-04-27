@@ -252,16 +252,6 @@ local function Overlay_OnShow(overlay)
 	overlay.animation:Play()
 end
 
-local function FadeIn_OnPlay(anim)
-	mod:Debug('FadeIn_OnPlay', anim)
-	anim:GetRegionParent():SetAlpha(0)
-end
-
-local function FadeIn_OnFinished(anim)
-	mod:Debug('FadeIn_OnFinished', anim)
-	anim:GetRegionParent():SetAlpha(1)
-end
-
 local function Animation_OnFinished(animation)
 	mod:Debug('Animation_OnFinished', animation)
 	local overlay = animation:GetParent()
@@ -273,6 +263,7 @@ end
 function mod:CreateOverlay()
 	local overlay = CreateFrame("Frame", nil, self.frame)
 	overlay:SetAllPoints(self.frame)
+	overlay:SetAlpha(0)
 	overlay:Hide()
 	
 	overlay:SetScript('OnShow', Overlay_OnShow)
@@ -285,33 +276,26 @@ function mod:CreateOverlay()
 	local animation = overlay:CreateAnimationGroup()
 	animation:SetScript('OnFinished', Animation_OnFinished)
 	overlay.animation = animation
-	
+
 	local fadeIn = animation:CreateAnimation("Alpha")
 	fadeIn:SetOrder(1)
 	fadeIn:SetDuration(0.5)
 	fadeIn:SetChange(1)
-	fadeIn:SetScript('OnPlay', FadeIn_OnPlay)
-	fadeIn:SetScript('OnFinished', FadeIn_OnFinished)
 	fadeIn:SetSmoothing("OUT")
 	
-	local scaleIn = animation:CreateAnimation("Scale")
-	scaleIn:SetOrder(1)
-	scaleIn:SetDuration(0.5)
-	scaleIn:SetScale(2, 2)
-	scaleIn:SetSmoothing("OUT")
+	local scale = animation:CreateAnimation("Scale")
+	scale:SetOrder(1)
+	scale:SetDuration(1)
+	scale:SetScale(4, 4)
+	scale:SetSmoothing("IN_OUT")
 	
 	local fadeOut = animation:CreateAnimation("Alpha")
-	fadeOut:SetOrder(2)
+	fadeOut:SetOrder(1)
 	fadeOut:SetDuration(0.5)
+	fadeOut:SetStartDelay(0.5)
 	fadeOut:SetChange(-1)
 	fadeOut:SetSmoothing("IN")
 
-	local scaleOut = animation:CreateAnimation("Scale")
-	scaleOut:SetOrder(2)
-	scaleOut:SetDuration(0.5)
-	scaleOut:SetScale(2, 2)
-	scaleOut:SetSmoothing("IN")
-	
 	return overlay
 end
 
