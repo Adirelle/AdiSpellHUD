@@ -28,10 +28,18 @@ local MODELS = {
 	spells = {
 		GetInfo = function(id)
 			local name, _, texture = GetSpellInfo(id)
-			return name, texture
+			if mod.petSpells[id] then
+				return format("%s (%s)", name, UnitName("pet")), texture
+			else
+				return name, texture
+			end
 		end,
-		GetCooldown = GetSpellCooldown,
+		GetCooldown = GetSpellCooldown, 
 		GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
+		IsMuted = function(id)
+			local index = mod.petSpells[id]
+			return index and select(2, GetSpellAutocast(index, "pet"))
+		end,		
 	},
 	items = {
 		GetInfo = function(id)
@@ -40,6 +48,7 @@ local MODELS = {
 		end,
 		GetCooldown = GetItemCooldown,
 		GetTexture = function(id) return select(10, GetItemInfo(id)) end,
+		IsMuted = function() return false end,
 	},
 }
 
@@ -55,6 +64,7 @@ function mod:OnInitialize()
 
 	self.runningCooldowns = {}
 	self.cooldownsToWatch = {}
+	self.petSpells = {}
 	
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "SPELLS_CHANGED", self.UpdateEnabledState, self)
@@ -103,12 +113,28 @@ function mod:UpdateEnabledState(event)
 	local cooldownsToWatch = self.cooldownsToWatch
 	local spells = wipe(cooldownsToWatch.spells or {})
 	local items = wipe(cooldownsToWatch.items or {})
+	local petSpells = wipe(self.petSpells)
 
 	if addon.db.profile.modules[self.name] then
 		MergeSpells(spells, COOLDOWNS.COMMON)
 		if COOLDOWNS[class] then
 			MergeSpells(spells, COOLDOWNS[class]['*'])
 			MergeSpells(spells, COOLDOWNS[class][primaryTree])
+		end
+		if HasPetSpells() then
+			for index = 1, math.huge do
+				local link = GetSpellLink(index, "pet")
+				if link then
+					if not IsPassiveSpell(index, "pet") then
+						self:Debug('Watch for pet spell', link)
+						local id = tonumber(strmatch(link, "spell:(%d+)"))
+						spells[id] = true
+						petSpells[id] = index
+					end
+				else
+					break
+				end				
+			end
 		end
 		for index = 1, 18 do
 			local id = GetInventoryItemID("player", index)
@@ -210,7 +236,8 @@ function mod:Update(silent)
 	local minDuration = prefs.minDuration
 	local running = self.runningCooldowns
 	for model, ids in pairs(self.cooldownsToWatch) do
-		local GetCooldown, GetTexture, enabled = MODELS[model].GetCooldown, MODELS[model].GetTexture, prefs[model]
+		local modelProto = MODELS[model]
+		local GetCooldown, GetTexture, IsMuted, enabled = modelProto.GetCooldown, modelProto.GetTexture, modelProto.IsMuted, prefs[model]
 		for id in pairs(ids) do
 			local start, duration = GetCooldown(id)
 			local timeLeft = max(0, (start and duration and duration >= minDuration and start+duration or 0) - now)
@@ -219,7 +246,7 @@ function mod:Update(silent)
 				running[id] = timeLeft
 			elseif running[id] then
 				running[id] = nil
-				if not silent and enabled[id] then
+				if not silent and enabled[id] and not IsMuted(id) then
 					self:ShowCooldownReset(id, GetTexture(id))
 				end
 			end
