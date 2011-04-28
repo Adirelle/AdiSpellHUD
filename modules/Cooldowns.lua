@@ -229,7 +229,7 @@ end
 
 function mod:Update(silent)
 	if not self.timer then return end
-	self:Debug("Update", silent)
+	--self:Debug("Update", silent)
 	self.needUpdate = nil
 	local nextCheck = math.huge
 	local now = GetTime()

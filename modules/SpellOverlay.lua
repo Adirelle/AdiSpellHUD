@@ -6,17 +6,17 @@ All rights reserved.
 
 local _G = _G
 local CreateFrame = _G.CreateFrame
-local pairs, wipe, min, max = _G.pairs, _G.wipe, _G.min, _G.max
+local pairs, wipe, min, max, next = _G.pairs, _G.wipe, _G.min, _G.max, _G.next
+local tinsert, tDeleteItem = _G.tinsert, _G.tDeleteItem
 local UnitBuff, GetTime = _G.UnitBuff, _G.GetTime
-local huge = _G.math.huge
-local SpellActivationOverlay = _G.SpellActivationOverlayFrame
+local huge, sin, pi = _G.math.huge, _G.math.sin, _G.math.pi
 
 local addonName, addon = ...
 local L = addon.L
 
 local mod = addon:NewModule("SpellOverlay", "AceEvent-3.0", "AceHook-3.0", "LibMovable-1.0")
 
-local frame = SpellActivationOverlayFrame
+local frame = _G.SpellActivationOverlayFrame
 
 local DEFAULT_SETTINGS = {
 	profile = {
@@ -29,8 +29,6 @@ function mod:OnInitialize()
 	t.scale, t.pointFrom, t.refFrame, t.pointTo, t.xOffset, t.yOffset = frame:GetScale(), frame:GetPoint()
 	
 	self.db = addon.db:RegisterNamespace(self.name, DEFAULT_SETTINGS)
-	
-	self.enhancedOverlays = {}
 
 	self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L["Blizzard Spell Overlay"], function(target)
 		local anchor = CreateFrame("Frame", nil, target)
@@ -40,22 +38,32 @@ function mod:OnInitialize()
 	end)
 	self:SetMovable(frame, false)
 	frame:SetClampedToScreen(true)
+	
+	self.throttle = 0
+	self.num = 0
 end
 
 function mod:OnEnable()
-	for i, overlay in pairs(frame.unusedOverlays) do
-		self:EnhanceOverlay(overlay)
-	end
-	for spell, overlays in pairs(frame.overlaysInUse) do
-		for i, overlay in pairs(overlays) do
-			self:EnhanceOverlay(overlay)
-		end
-	end
 	self:RawHook('SpellActivationOverlay_CreateOverlay', true)
 	self:RegisterEvent('UNIT_AURA')
 	
 	self:UpdateOverlaysInUse()
 end
+
+--@debug@
+function _G.sotest()
+	_G.SpellActivationOverlay_OnEvent(frame, "SPELL_ACTIVATION_OVERLAY_SHOW",
+		16870, -- spellID
+		"Textures\\SpellActivationOverlays\\Natures_Grace.BLP", -- texture
+		"Left + Right (Flipped)", -- positions
+		1, -- scale,
+		255, 255, 255 -- r, g, b
+	)
+	_G.LibStub('AceTimer-3.0').ScheduleTimer(mod, function()
+		_G.SpellActivationOverlay_OnEvent(frame, "SPELL_ACTIVATION_OVERLAY_HIDE", 16870)
+	end, 8)
+end
+--@end-debug@
 
 function mod:GetOptions()
 	return {
@@ -77,29 +85,32 @@ function mod:GetOptions()
 	}
 end
 
-function mod:SpellActivationOverlay_CreateOverlay(...)
-	local overlay = self.hooks.SpellActivationOverlay_CreateOverlay(...)
+local function CreateAnimation(group, type, order, duration, smoothing, arg1, arg2)
+	local anim = group:CreateAnimation(type)
+	anim:SetOrder(order)
+	anim:SetDuration(duration)
+	anim:SetSmoothing(smoothing or "NONE")
+	if type == "Scale" and arg1 and arg2 then
+		anim:SetScale(arg1, arg2)
+	elseif type == "Alpha" and arg1 then
+		anim:SetChange(arg1)
+	end
+	return anim
+end
+
+local NOOP = function() end
+local fakePulse = { Play = NOOP, Pause = NOOP, Stop = NOOP }
+
+local i = 0
+function mod:SpellActivationOverlay_CreateOverlay(parent)
+	local overlay = CreateFrame("Frame", nil, parent)
 	overlay:Hide()
-	self:EnhanceOverlay(overlay)
-	if overlay.animIn:IsPlaying() then
-		overlay.animIn:Stop()
-		overlay.animIn:Play()
-	end
-	return overlay
-end
 
-function mod:UNIT_AURA(_, unit)
-	if unit == "player" then
-		self:UpdateOverlaysInUse()
-	end
-end
+	overlay:SetScript('OnShow', mod.Overlay_OnShow)
+	overlay:SetScript('OnHide', mod.Overlay_OnHide)
 
-function mod:EnhanceOverlay(overlay)
-	if self.enhancedOverlays[overlay] then return end
-	self.enhancedOverlays[overlay] = true
-
-	overlay:HookScript('OnHide', mod.Overlay_OnHide)
-	overlay:HookScript('OnShow', mod.Overlay_OnShow)
+	local texture = overlay:CreateTexture(nil, "ARTWORK")
+	overlay.texture = texture
 
 	local text = overlay:CreateFontString(nil, "OVERLAY")
 	text:SetFont([[Fonts\FRIZQT__.TTF]], 24, "THICKOUTLINE")
@@ -108,20 +119,18 @@ function mod:EnhanceOverlay(overlay)
 	text:SetJustifyV("MIDDLE")
 	text:Hide()
 	overlay.text = text
+	
+	overlay.pulse = fakePulse
+	overlay.animIn = { overlay = overlay, Play = mod.AnimIn_Play }
+	overlay.animOut = { overlay = overlay, Play = mod.AnimOut_Play, Stop = NOOP }
 
-	overlay.animIn:GetAnimations():SetDuration(0.3)
-	local anim = overlay.animIn:CreateAnimation("Scale")
-	anim:SetDuration(0.3)
-	anim:SetScale(2, 2)
-	anim:SetScript('OnPlay', mod.ScaleIn_OnPlay)
-	anim:SetScript('OnFinished', mod.ScaleIn_OnFinishied)
+	return overlay
+end
 
-	overlay.animOut:GetAnimations():SetDuration(0.3)
-	anim = overlay.animOut:CreateAnimation("Scale")
-	anim:SetDuration(0.3)
-	anim:SetScale(2, 2)
-	anim:SetScript('OnPlay', mod.ScaleOut_OnPlay)
-	anim:SetScript('OnFinished', mod.ScaleOut_OnFinished)
+function mod:UNIT_AURA(_, unit)
+	if unit == "player" then
+		self:UpdateOverlaysInUse()
+	end
 end
 
 local seen = {}
@@ -150,77 +159,102 @@ function mod:UpdateOverlaysInUse()
 	end
 end
 
+function mod:UpdateOverlay(overlay, duration, expires, count)
+	if duration and duration > 0 then
+		overlay.duration = duration
+		overlay.text:Show()
+	else
+		overlay.text:Hide()
+	end
+end
+
+function mod.OnUpdate(_, elapsed)
+	elapsed = elapsed + mod.throttle
+	local num = mod.num + 1
+	if elapsed < 0.1 and num < 2 then
+		mod.throttle, mod.num = elapsed, num
+		return
+	end
+	mod.throttle, mod.num = 0, 0
+	if not next(frame.overlaysInUse) then
+		frame:SetScript('OnUpdate', nil)
+	else
+		for spell, overlays in pairs(frame.overlaysInUse) do	
+			for _, overlay in pairs(overlays) do
+				mod.Overlay_OnUpdate(overlay, elapsed)
+			end
+		end
+	end
+end
+
+function mod.Overlay_OnUpdate(overlay, time)
+	time = time + overlay.time
+	overlay.time = time
+	
+	local alpha, scale = 1, 1
+	if overlay.phase == 1 then
+		alpha = min(time / 0.3, 1)
+		if alpha < 1 then
+			scale = 0.5 + 0.5 * alpha 
+		else
+			overlay.phase = 2
+		end
+	elseif overlay.phase == 2 then
+		scale = 1 + 0.05 * sin(time * 2 * pi)
+	elseif overlay.phase == 3 then		
+		alpha = max(1 - time / 0.3, 0)
+		if alpha > 0 then
+			scale = 2 - alpha
+		else
+			overlay:Hide()
+			return
+		end
+	end
+	overlay:SetAlpha(alpha)
+	local w, h = overlay:GetSize()
+	overlay.texture:SetSize(scale * w, scale * h)
+	
+	local text = overlay.text
+	if text:IsVisible() then
+		local timeleft = overlay.duration - time
+		if timeleft <= 3 then
+			text:SetFormattedText("%3.1f", timeleft)
+		else
+			text:SetFormattedText("%d", timeleft)
+		end
+		local f = timeleft / overlay.duration
+		text:SetTextColor(1, min(2*f, 1), max(2*f-1, 0))
+	end
+end
+
 function mod.Overlay_OnShow(overlay)
-	overlay.pulse:Stop()
-	overlay.animIn:Stop()
-	overlay:SetScale(0.5)
+	mod:Debug('Overlay_OnShow', overlay)
+	frame:SetScript('OnUpdate', mod.OnUpdate)
+	local point = overlay:GetPoint()
+	overlay.texture:ClearAllPoints()
+	overlay.texture:SetPoint(point, overlay, point, 0, 0)
 	overlay.animIn:Play()
+	mod.Overlay_OnUpdate(overlay, 0)
 end
 
 function mod.Overlay_OnHide(overlay)
-	overlay:SetScript('OnUpdate', nil)
+	mod:Debug('Overlay_OnHide', overlay)	
+	tDeleteItem(frame.overlaysInUse[overlay.spellID], overlay)
+	tinsert(frame.unusedOverlays, overlay);	
+end
+
+function mod.AnimIn_Play(anim)
+	mod:Debug('AnimIn_Play', anim)
+	local overlay = anim.overlay
+	overlay.phase = 1
+	overlay.time = 0
+end
+
+function mod.AnimOut_Play(anim)
+	mod:Debug('AnimOut_Play', anim)
+	local overlay = anim.overlay
 	overlay.text:Hide()
+	overlay.phase = 3
+	overlay.time = 0
 end
 
-function mod:UpdateOverlay(overlay, duration, expires, count)
-	if duration and duration > 0 then
-		overlay:SetScript('OnUpdate', mod.Overlay_OnUpdate)
-		overlay.timeleft = expires - GetTime()
-		overlay.duration = duration
-		overlay.delay = 0
-		mod.Overlay_OnUpdate(overlay, 0)
-		overlay.text:Show()
-	else
-		mod.Overlay_OnHide(overlay)
-	end
-end
-
-function mod.Overlay_OnUpdate(overlay, elapsed)
-	overlay.delay = overlay.delay - elapsed
-	overlay.timeleft = overlay.timeleft - elapsed
-	if overlay.delay > 0 then
-		return
-	end
-	if overlay.timeleft <= 0 then
-		mod.Overlay_OnHide(overlay)
-	elseif overlay.timeleft <= 3 then
-		overlay.delay = overlay.timeleft % 0.1 + 0.01
-		overlay.text:SetFormattedText("%3.1f", overlay.timeleft)
-	else
-		overlay.delay = overlay.timeleft % 1 + 0.01
-		overlay.text:SetFormattedText("%d", overlay.timeleft)
-	end
-	local f = overlay.timeleft / overlay.duration
-	overlay.text:SetTextColor(1, min(2*f, 1), max(2*f-1, 0))
-end
-
-function mod.ScaleIn_OnPlay(anim)
-	local overlay = anim:GetRegionParent()
-	local point, relativeTo, relativePoint, xOffset, yOffset = overlay:GetPoint()
-	if point then
-		overlay:SetPoint(point, relativeTo, relativePoint, (xOffset or 0) * 2 , (yOffset or 0) * 2)
-		anim:SetOrigin(point, 0, 0)
-	end
-end
-
-function mod.ScaleIn_OnFinishied(anim)
-	local overlay = anim:GetRegionParent()
-	local point, relativeTo, relativePoint, xOffset, yOffset = overlay:GetPoint()
-	if point then
-		overlay:SetPoint(point, relativeTo, relativePoint, (xOffset or 0) / 2, (yOffset or 0) / 2)
-	end
-	overlay:SetScale(1)
-end
-
-function mod.ScaleOut_OnPlay(anim)
-	local overlay = anim:GetRegionParent()
-	overlay.pulse:Stop()
-	overlay:SetScale(1)
-	local point = overlay:GetPoint()
-	if point then
-		anim:SetOrigin(point, 0, 0)
-	end
-end
-
-function mod.ScaleOut_OnFinished(anim)
-end
