@@ -4,6 +4,13 @@ Copyright 2011 Adirelle (adirelle@tagada-team.net)
 All rights reserved.
 --]]
 
+local _G = _G
+local CreateFrame = _G.CreateFrame
+local pairs, wipe, min, max = _G.pairs, _G.wipe, _G.min, _G.max
+local UnitBuff, GetTime = _G.UnitBuff, _G.GetTime
+local huge = _G.math.huge
+local SpellActivationOverlay = _G.SpellActivationOverlayFrame
+
 local addonName, addon = ...
 local L = addon.L
 
@@ -121,7 +128,7 @@ local seen = {}
 function mod:UpdateOverlaysInUse()
 	local overlays = frame.overlaysInUse
 	wipe(seen)
-	for index = 1, math.huge do
+	for index = 1, huge do
 		local name, _, _, count, _, duration, expires, _, _, _, spellID = UnitBuff("player", index)
 		if not name then break end
 		if spellID then
