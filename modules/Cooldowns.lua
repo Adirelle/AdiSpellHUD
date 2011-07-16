@@ -502,6 +502,7 @@ COOLDOWNS = {
 		[1] = {
 			[48505] = true, -- Starfall
 			[78675] = true, -- Solar Beam
+			[78674] = true, -- Starsurge
 		},
 		-- Feral
 		[2] = {
