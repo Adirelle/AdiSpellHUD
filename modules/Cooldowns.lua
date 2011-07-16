@@ -497,12 +497,15 @@ COOLDOWNS = {
 			--[77761] = true, -- Stampeding Roar (bear)
 			[77764] = true, -- Stampeding Roar (cat)
 			[22842] = true, -- Frenzied Regeneration
+			[88751] = true, -- Wild Mushroom: Detonate
 		},
 		-- Balance
 		[1] = {
 			[48505] = true, -- Starfall
 			[78675] = true, -- Solar Beam
 			[78674] = true, -- Starsurge
+			[33831] = true, -- Force of Nature
+			[50516] = true, -- Typhoon
 		},
 		-- Feral
 		[2] = {
