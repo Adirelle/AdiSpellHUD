@@ -161,6 +161,7 @@ end
 
 function mod:UpdateOverlay(overlay, duration, expires, count)
 	if duration and duration > 0 then
+		overlay.time = expires - GetTime()
 		overlay.duration = duration
 		overlay.text:Show()
 	else
