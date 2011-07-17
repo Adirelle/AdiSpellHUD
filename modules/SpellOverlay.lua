@@ -148,7 +148,7 @@ end
 
 function mod:UpdateOverlay(overlay, duration, expires, count)
 	if duration and duration > 0 then
-		overlay.time = expires - GetTime()
+		overlay.expires = expires
 		overlay.duration = duration
 		overlay.text:Show()
 	else
@@ -204,7 +204,7 @@ function mod.Overlay_OnUpdate(overlay, time)
 	
 	local text = overlay.text
 	if text:IsVisible() then
-		local timeleft = overlay.duration - time
+		local timeleft = overlay.expires - GetTime()
 		if timeleft <= 3 then
 			text:SetFormattedText("%3.1f", timeleft)
 		else
