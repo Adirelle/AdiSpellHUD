@@ -85,19 +85,6 @@ function mod:GetOptions()
 	}
 end
 
-local function CreateAnimation(group, type, order, duration, smoothing, arg1, arg2)
-	local anim = group:CreateAnimation(type)
-	anim:SetOrder(order)
-	anim:SetDuration(duration)
-	anim:SetSmoothing(smoothing or "NONE")
-	if type == "Scale" and arg1 and arg2 then
-		anim:SetScale(arg1, arg2)
-	elseif type == "Alpha" and arg1 then
-		anim:SetChange(arg1)
-	end
-	return anim
-end
-
 local NOOP = function() end
 local fakePulse = { Play = NOOP, Pause = NOOP, Stop = NOOP }
 
