@@ -68,6 +68,7 @@ function mod:OnInitialize()
 	
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "SPELLS_CHANGED", self.UpdateEnabledState, self)
+	self.RegisterEvent(self.name, "PLAYER_TALENT_UPDATE", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UNIT_INVENTORY_CHANGED, self)
 	self:UpdateEnabledState("OnInitialize")
 
@@ -95,7 +96,7 @@ end
 
 function mod:UpdateEnabledState(event)
 	self:Debug('UpdateEnabledState', event)
-	local primaryTree = GetPrimaryTalentTree()
+	local primaryTree = GetActiveSpecGroup()
 	if not primaryTree then
 		if event == "OnInitialize" then
 			self.RegisterEvent(self.name, "PLAYER_ALIVE", function(event)
