@@ -140,6 +140,7 @@ function mod:Update(event, unit)
 			else
 				self:Debug(spell, 'New widget', spell, count, duration, expires)
 				widget = self:AcquireSpellWidget(prefs.size, spell, count, duration, expires)
+				widget:SetParent(self.frame)
 				widget.OnCooldownEnd = widgets.Release
 				widget.OnRelease = self.OnWidgetReleased
 				widget.id = id
