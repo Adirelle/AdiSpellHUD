@@ -48,6 +48,9 @@ local DEFAULT_SETTINGS = {
 		size = 32,
 		spacing = 4,
 		anchor = { }
+	},
+	class = {
+		spells = { ['*'] = true },
 	}
 }
 
@@ -128,11 +131,12 @@ end
 
 function mod:Update(event, unit)
 	if not watchers[unit] then return end
+	local allowed = self.db.class.spells
 	self:Debug('Update', event, unit)
 	local needLayout = false
 	for id, callback in pairs(watchers[unit]) do
 		local spell, count, duration, expires = callback(unit, id)
-		if spell then
+		if spell and allowed[id] then
 			local widget = widgets[id]
 			if widget then
 				self:Debug(spell, 'Update widget', spell, count, duration, expires)
@@ -248,6 +252,28 @@ function mod:GetOptions()
 	local spellList = {}
 	return {
 		args = {
+			spells = {
+				name = L['Spells'],
+				type = 'multiselect',
+				values = function()
+					wipe(spellList)
+					for unit, spells in pairs(GetWatchers()) do
+						for id, callback in pairs(spells) do
+							local name, _, texture = GetSpellInfo(id)
+							spellList[id] = format("|T%s:24|t %s", texture, name)
+						end
+					end
+					return spellList
+				end,
+				get = function(_, id)
+					return self.db.class.spells[id]
+				end,
+				set = function(_, id, enable)
+					self.db.class.spells[id] = enable
+					self:UpdateAll('OnConfigChanged')
+				end,
+				order = 10,
+			},
 			size = {
 				name = L['Size'],
 				type = 'range',
