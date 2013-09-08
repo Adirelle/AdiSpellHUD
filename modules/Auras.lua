@@ -61,8 +61,9 @@ function mod:OnEnable()
 	
 	if not self.frame then
 		local frame = CreateFrame("Frame", nil, UIParent)
-		frame:SetPoint("LEFT", 200, 0)
+		frame:SetPoint("RIGHT", UIParent, "CENTER", -400, 0)
 		frame:SetClampedToScreen(true)
+		frame:SetSize(prefs.size, prefs.size)
 		self.frame = frame
 		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Auras"])
 	end
@@ -107,9 +108,9 @@ function mod:Layout()
 	for i, widget in ipairs(order) do
 		widget:ClearAllPoints()
 		if i == 1 then
-			widget:SetPoint('LEFT', self.frame)
+			widget:SetPoint('RIGHT', self.frame)
 		else
-			widget:SetPoint('LEFT', order[i-1], 'RIGHT', prefs.spacing, 0)
+			widget:SetPoint('RIGHT', order[i-1], 'LEFT', -prefs.spacing, 0)
 		end
 	end
 	self.frame:SetSize(#order * (prefs.size + prefs.spacing) - prefs.spacing, prefs.size)
