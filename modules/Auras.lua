@@ -44,6 +44,7 @@ local prefs
 
 local DEFAULT_SETTINGS = {
 	profile = {
+		alpha = 0.6,
 		size = 32,
 		spacing = 4,
 		anchor = { }
@@ -70,6 +71,7 @@ function mod:OnEnable()
 		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Auras"])
 	end
 
+	self.frame:SetAlpha(prefs.alpha)
 	self:RegisterEvent('SPELLS_CHANGED', 'UpdateSpells')
 	self:RegisterEvent('PLAYER_ENTERING_WORLD', 'UpdateAll')
 
