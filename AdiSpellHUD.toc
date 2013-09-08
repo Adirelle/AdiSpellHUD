@@ -31,6 +31,7 @@ Localization.lua
 AdiSpellHUD.lua
 Options.lua
 
+modules\Auras.lua
 modules\Cooldowns.lua
 modules\SpellOverlay.lua
 
