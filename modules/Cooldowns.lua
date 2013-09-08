@@ -1,6 +1,6 @@
 --[[
 AdiSpellHUD - Spell overlay customization and spell state HUD.
-Copyright 2011 Adirelle (adirelle@tagada-team.net)
+Copyright 2011-2013 Adirelle (adirelle@gmail.com)
 All rights reserved.
 --]]
 
