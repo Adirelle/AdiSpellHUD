@@ -28,6 +28,17 @@ do
 	
 	-- Callback signature : spell, count, duration, expires = callback(unit, id)
 	if class == 'HUNTER' then
+		GetWatchers = function()
+			return {
+				player = {
+					[ 19263] = OwnAuraGetter( 19263), -- Deterrence
+					[ 34477] = OwnAuraGetter( 34477), -- Misdirection
+					[ 56343] = OwnAuraGetter( 56343), -- Lock and Load
+					[ 53224] = OwnAuraGetter( 53224), -- Improved Steady Shot
+					[  3045] = OwnAuraGetter(  3045), -- Rapid Fire
+				},
+			}
+		end
 	elseif class == 'DRUID' then
 		GetWatchers = function()
 			return {
