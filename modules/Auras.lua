@@ -96,6 +96,7 @@ end
 
 local order = {}
 function mod:Layout()
+	local iconSize = prefs.size
 	if next(widgets) then
 		self.frame:Show()
 	else
@@ -111,13 +112,13 @@ function mod:Layout()
 	
 	for i, widget in ipairs(order) do
 		widget:ClearAllPoints()
+		widget:SetSize(iconSize, iconSize)
 		if i == 1 then
 			widget:SetPoint('RIGHT', self.frame)
 		else
 			widget:SetPoint('RIGHT', order[i-1], 'LEFT', -prefs.spacing, 0)
 		end
 	end
-	self.frame:SetSize(#order * (prefs.size + prefs.spacing) - prefs.spacing, prefs.size)
 end
 
 function mod.OnWidgetReleased(widget)
