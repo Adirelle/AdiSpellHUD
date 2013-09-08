@@ -124,9 +124,9 @@ function mod:UpdateEnabledState(event)
 		end
 		if HasPetSpells() then
 			for index = 1, math.huge do
-				local link = GetSpellLink(index, "pet")
+				local link = GetSpellLink(index, BOOKTYPE_PET)
 				if link then
-					if not IsPassiveSpell(index, "pet") then
+					if not IsPassiveSpell(index, BOOKTYPE_PET) then
 						self:Debug('Watch for pet spell', link)
 						local id = tonumber(strmatch(link, "spell:(%d+)"))
 						spells[id] = true
