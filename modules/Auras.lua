@@ -30,7 +30,7 @@ do
 				player = {
 					[113043] = OwnAuraGetter( 16870), -- Omen of Clarity => Clearcasting
 					[ 77495] = OwnAuraGetter(100977), -- Mastery: Harmony => Harmony
-					[ 33886] = OwnAuraGetter( 33886), -- Swift Rejuvenation
+					[ 33886] = OwnAuraGetter( 96206), -- Swift Rejuvenation
 				},
 			}
 		end
