@@ -227,3 +227,60 @@ function mod:UpdateSpells(event)
 
 	self:UpdateAll(event)
 end
+
+function mod:OnConfigChanged()
+	local frame = self.frame
+	if frame then
+		frame:SetAlpha(prefs.alpha)
+		self:Layout()
+	end
+	if self:IsEnabled() then
+		self:Update('OnConfigChanged')
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Options
+--------------------------------------------------------------------------------
+
+function mod:GetOptions()
+	local L = addon.L
+	local spellList = {}
+	return {
+		args = {
+			size = {
+				name = L['Size'],
+				type = 'range',
+				order = 40,
+				min = 16,
+				max = 256,
+				step = 1,
+				bigStep = 8,
+			},
+			alpha = {
+				name = L['Opacity'],
+				type = 'range',
+				order = 50,
+				isPercent = true,
+				min = 0.01,
+				max = 1.0,
+				step = 0.01,
+				bigStep = 0.1,
+			},
+			unlock = {
+				name = function()
+					return self:AreMovablesLocked() and L["Unlock"] or L["Lock"]
+				end,
+				type = 'execute',
+				order = 70,
+				func = function()
+					if self:AreMovablesLocked() then
+						self:UnlockMovables()
+					else
+						self:LockMovables()
+					end
+				end,
+			}
+		}
+	}
+end
