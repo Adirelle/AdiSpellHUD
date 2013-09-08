@@ -12,6 +12,10 @@ do
 	
 	local function OwnAuraGetter(spell, harmful)
 		local name = GetSpellInfo(spell)
+		if not name then
+			geterrorhandler()("Unknown spell id", spell)
+			return function() end
+		end
 		local filter = "PLAYER|" .. (harmful and "HARMFUL" or "HELPFUL")
 		return function(unit)
 			local name, _, _, count, _, duration, expirationTime = UnitAura(unit, name, nil, filter)
