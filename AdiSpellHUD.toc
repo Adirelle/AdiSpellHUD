@@ -24,6 +24,7 @@ libs\LibDualSpec-1.0\LibDualSpec-1.0.lua
 #@end-no-lib-strip@
 
 # Not on wowace.com
+libs\LibSpellWidget-1.0\lib.xml
 libs\LibMovable-1.0\LibMovable-1.0.lua
 
 Localization.lua
