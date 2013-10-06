@@ -49,6 +49,17 @@ do
 				},
 			}
 		end
+	elseif class == 'WARLOCK' then
+		GetWatchers = function()
+			return {
+				player = {
+					[113858] = OwnAuraGetter(113858), -- Dark Soul: Instability
+					[117896] = OwnAuraGetter(117896), -- Backdraft
+					[ 80240] = OwnAuraGetter( 80240), -- Havoc
+					[104773] = OwnAuraGetter(104773), -- Unending Resolve
+				},
+			}
+		end
 	end
 end
 if not GetWatchers then return end

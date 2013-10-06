@@ -548,4 +548,26 @@ COOLDOWNS = {
 			[ 3674] = true, -- Black Arrow
 		},
 	},
+	WARLOCK = {
+		['*'] = {
+			[  1122] = true, -- Summon Infernal
+			[  5484] = true, -- Howl of Terror
+			[ 18540] = true, -- Summon Doomguard
+			[ 29858] = true, -- Soulshatter
+			[ 48020] = true, -- Demonic Circle: Teleport
+			[104773] = true, -- Unending Resolve
+		},
+		-- Affliction
+		[1] = {
+		},
+		-- Demonology
+		[2] = {
+		},
+		-- Destruction
+		[3] = {
+			[ 80240] = true, -- Havoc
+			[113858] = true, -- Dark Soul: Instability
+			[120451] = true, -- Flames of Xororth
+		},
+	},
 }
