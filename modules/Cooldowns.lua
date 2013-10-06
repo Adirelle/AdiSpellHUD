@@ -100,7 +100,7 @@ function mod:UpdateEnabledState(event)
 	if not primaryTree then
 		if event == "OnInitialize" then
 			self.RegisterEvent(self.name, "PLAYER_ALIVE", function(event)
-				if GetPrimaryTalentTree() then
+				if GetActiveSpecGroup() then
 					self.UnregisterEvent(self.name, "PLAYER_ALIVE")
 				 	return self:UpdateEnabledState(event)
 				end
