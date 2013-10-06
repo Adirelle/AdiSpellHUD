@@ -6,10 +6,18 @@ All rights reserved.
 
 local addonName, addon = ...
 
+local mod = addon:NewModule("Auras", "AceEvent-3.0", "LibMovable-1.0", "LibSpellWidget-1.0")
+
 local GetWatchers
-do
+GetWatchers = function()
+	local aurasToWatch = {}
+
+	-- Initialize once
+	GetWatchers = function() return aurasToWatch end
+
 	local _, class = UnitClass('player')
-	
+
+	-- Helper
 	local function OwnAuraGetter(spell, harmful)
 		local name = GetSpellInfo(spell)
 		if not name then
@@ -27,43 +35,73 @@ do
 	
 	-- Callback signature : spell, count, duration, expires = callback(unit, id)
 	if class == 'HUNTER' then
-		GetWatchers = function()
-			return {
-				player = {
-					[ 19263] = OwnAuraGetter( 19263), -- Deterrence
-					[ 34477] = OwnAuraGetter( 34477), -- Misdirection
-					[ 56343] = OwnAuraGetter( 56343), -- Lock and Load
-					[ 53224] = OwnAuraGetter( 53224), -- Improved Steady Shot
-					[  3045] = OwnAuraGetter(  3045), -- Rapid Fire
-				},
-			}
-		end
+		aurasToWatch.player = {
+			[ 19263] = OwnAuraGetter( 19263), -- Deterrence
+			[ 34477] = OwnAuraGetter( 34477), -- Misdirection
+			[ 56343] = OwnAuraGetter( 56343), -- Lock and Load
+			[ 53224] = OwnAuraGetter( 53224), -- Improved Steady Shot
+			[  3045] = OwnAuraGetter(  3045), -- Rapid Fire
+		}
 	elseif class == 'DRUID' then
-		GetWatchers = function()
-			return {
-				player = {
-					[113043] = OwnAuraGetter( 16870), -- Omen of Clarity => Clearcasting
-					[ 77495] = OwnAuraGetter(100977), -- Mastery: Harmony => Harmony
-					[ 33886] = OwnAuraGetter( 96206), -- Swift Rejuvenation
-				},
-			}
-		end
+		aurasToWatch.player = {
+			[ 22812] = OwnAuraGetter( 22812), -- Barkskin
+			[ 29166] = OwnAuraGetter( 29166), -- Innervate
+			[ 33886] = OwnAuraGetter( 96206), -- Swift Rejuvenation
+			[ 77495] = OwnAuraGetter(100977), -- Mastery: Harmony => Harmony
+			[106922] = OwnAuraGetter(106922), -- Might of Ursoc
+			[113043] = OwnAuraGetter( 16870), -- Omen of Clarity => Clearcasting
+			[114107] = OwnAuraGetter(114107), -- Soul of the Forest
+			[124974] = OwnAuraGetter(124974), -- Nature's Vigil
+		}
 	elseif class == 'WARLOCK' then
-		GetWatchers = function()
-			return {
-				player = {
-					[113858] = OwnAuraGetter(113858), -- Dark Soul: Instability
-					[117896] = OwnAuraGetter(117896), -- Backdraft
-					[ 80240] = OwnAuraGetter( 80240), -- Havoc
-					[104773] = OwnAuraGetter(104773), -- Unending Resolve
-				},
-			}
+		aurasToWatch.player = {
+			[113858] = OwnAuraGetter(113858), -- Dark Soul: Instability
+			[117896] = OwnAuraGetter(117896), -- Backdraft
+			[ 80240] = OwnAuraGetter( 80240), -- Havoc
+			[104773] = OwnAuraGetter(104773), -- Unending Resolve
+		}
+	else
+		aurasToWatch.player = {}
+	end
+
+	-- Haste cooldowns
+	local hasteCooldowns = {}
+	for i, id in ipairs {
+		  2825, -- Bloodlust
+		 32182, -- Heroism
+		 80353, -- Time Wrap
+		 90355, -- Ancient Hysteria
+		146555, -- Drums of Rage
+	} do
+		local name = GetSpellInfo(id)
+		if name then
+			tinsert(hasteCooldowns, name)
+		else
+			geterrorhandler()("Spell not found: "..id)
 		end
 	end
-end
-if not GetWatchers then return end
+	aurasToWatch.player[-1] = function(unit)
+		for i, name in ipairs(hasteCooldowns) do
+			local found, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, name)
+			if found then
+				return spell, count, duration, expirationTime
+			end
+		end
+	end
 
-local mod = addon:NewModule("Auras", "AceEvent-3.0", "LibMovable-1.0", "LibSpellWidget-1.0")
+	-- Encounter debuffs
+	for i = 1, 4 do
+		local index = i
+		aurasToWatch.player[-1-i] = function(unit)
+			local name, _, _, count, _, duration, expirationTime, _, _, _, spell, _, isBossDebuff = UnitDebuff(unit, index)
+			if name and isBossDebuff then
+				return spell, count, duration, expirationTime
+			end
+		end
+	end
+
+	return aurasToWatch
+end
 
 local prefs
 
@@ -216,14 +254,14 @@ end
 function mod:UpdateSpells(event)
 	for unit, spells in pairs(GetWatchers()) do
 		for id, callback in pairs(spells) do
-			if IsPlayerSpell(id) then
+			if id < 0 or IsPlayerSpell(id) then
 				if not watchers[unit] then
 					self:Debug('Watching', unit, 'auras')
 					watchers[unit] = { [id] = callback }
 				else
 					watchers[unit][id] = callback
 				end
-				self:Debug('Watching for', GetSpellInfo(id), 'on', unit)
+				self:Debug('Watching for', GetSpellInfo(id), '(#'..id..')', 'on', unit)
 			elseif watchers[unit] then
 				watchers[unit][id] = nil
 			end
@@ -284,8 +322,14 @@ function mod:GetOptions()
 					wipe(spellList)
 					for unit, spells in pairs(GetWatchers()) do
 						for id, callback in pairs(spells) do
-							local name, _, texture = GetSpellInfo(id)
-							spellList[id] = format("|T%s:24|t %s", texture, name)
+							local realId = id
+							if id == -1 then
+								realId = UnitFactionGroup("player") == "Horde" and 2825 or 32182
+							end
+							if realId > 0 then
+								local name, _, texture = GetSpellInfo(realId)
+								spellList[id] = format("|T%s:24|t %s", texture, name)
+							end
 						end
 					end
 					return spellList
