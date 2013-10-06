@@ -522,29 +522,41 @@ COOLDOWNS = {
 	},
 	HUNTER = {
 		['*'] = {
-			[ 5384] = true, -- Feign Death
-			[  781] = true, -- Disengage
-			[34477] = true, -- Misdirection
-			[ 3045] = true, -- Rapid Fire
-			[ 1499] = true, -- Freezing Trap
-			[13813] = true, -- Explosive Trap
-			[19503] = true, -- Scatter Shot
-			[19263] = true, -- Deterrence
+			[   781] = true, -- Disengage
+			[  1499] = true, -- Freezing Trap
+			[  3045] = true, -- Rapid Fire
+			[  5384] = true, -- Feign Death
+			[ 13813] = true, -- Explosive Trap
+			[ 19263] = true, -- Deterrence
+			[ 19386] = true, -- Wyvern Sting
+			[ 19503] = true, -- Scatter Shot
+			[ 19577] = true, -- Intimidation
+			[ 20736] = true, -- Distracting Shot
+			[ 34477] = true, -- Misdirection
+			[ 51753] = true, -- Camouflage
+			[ 53271] = true, -- Master's Call
+			[ 82726] = true, -- Fervor
+			[109248] = true, -- Binding Shot
+			[109259] = true, -- Powershot
+			[109304] = true, -- Exhilaration
+			[117050] = true, -- Glaive Toss
+			[120360] = true, -- Barrage
+			[120679] = true, -- Dire Beast
+			[120697] = true, -- Lynx Rush
+			[121818] = true, -- Stampede
+			[131894] = true, -- A Murder of Crows
+			[147362] = true, -- Counter Shot
 		},
 		-- Beast mastery
 		[1] = {
-			[82726] = true, -- Fervor
 			[19574] = true, -- Bestial Wrath
-			[19577] = true, -- Intimidation
 		},
 		-- Marksmanship
 		[2] = {
 			[34490] = true, -- Silencing Shot
-			[23989] = true, -- Readiness
 		},
 		-- Survival
 		[3] = {
-			[13813] = false, -- Explosive Trap
 			[ 3674] = true, -- Black Arrow
 		},
 	},
