@@ -19,7 +19,6 @@ do
 		local filter = "PLAYER|" .. (harmful and "HARMFUL" or "HELPFUL")
 		return function(unit)
 			local name, _, _, count, _, duration, expirationTime = UnitAura(unit, name, nil, filter)
-			addon.Debug("OwnAuraGetter", name, spell, count, duration, expirationTime)
 			if name then
 				return spell, count, duration, expirationTime
 			end
