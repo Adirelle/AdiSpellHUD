@@ -565,6 +565,7 @@ COOLDOWNS = {
 		},
 		-- Destruction
 		[3] = {
+			[ 17962] = true, -- Conflagrate
 			[ 80240] = true, -- Havoc
 			[113858] = true, -- Dark Soul: Instability
 			[120451] = true, -- Flames of Xororth
