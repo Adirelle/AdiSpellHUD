@@ -96,11 +96,11 @@ end
 
 function mod:UpdateEnabledState(event)
 	self:Debug('UpdateEnabledState', event)
-	local primaryTree = GetActiveSpecGroup()
+	local primaryTree = GetSpecialization()
 	if not primaryTree then
 		if event == "OnInitialize" then
 			self.RegisterEvent(self.name, "PLAYER_ALIVE", function(event)
-				if GetActiveSpecGroup() then
+				if GetSpecialization() then
 					self.UnregisterEvent(self.name, "PLAYER_ALIVE")
 				 	return self:UpdateEnabledState(event)
 				end
