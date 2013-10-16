@@ -586,6 +586,13 @@ COOLDOWNS = {
 		},
 		-- Demonology
 		[2] = {
+			[119839] = true, -- Fury Ward (Dark Apotheosis)
+			[116198] = true, -- Aura of Enfeeblement (Metamorphosis/Dark Apotheosis)
+			[104025] = true, -- Immolation Aura (Metamorphosis/Dark Apotheosis)
+			[132413] = true, -- Shadow Bulwark (Grimoire of Sacrifice)
+			[113861] = true, -- Dark Soul: Knowledge
+			[114175] = true, -- Demonic Slash (Dark Apotheosis)
+			[105174] = true, -- Hand of Gul'dan
 		},
 		-- Destruction
 		[3] = {

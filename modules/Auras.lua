@@ -59,6 +59,10 @@ GetWatchers = function()
 			[117896] = OwnAuraGetter(117896), -- Backdraft
 			[ 80240] = OwnAuraGetter( 80240), -- Havoc
 			[104773] = OwnAuraGetter(104773), -- Unending Resolve
+			[119839] = OwnAuraGetter(119839), -- Fury Ward (Dark Apotheosis)
+			[116198] = OwnAuraGetter(116198), -- Aura of Enfeeblement (Metamorphosis/Dark Apotheosis)
+			[104025] = OwnAuraGetter(104025), -- Immolation Aura (Metamorphosis/Dark Apotheosis)
+			[132413] = OwnAuraGetter(132413), -- Shadow Bulwark (Grimoire of Sacrifice)
 		}
 	else
 		aurasToWatch.player = {}
