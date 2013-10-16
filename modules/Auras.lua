@@ -255,35 +255,16 @@ function mod:UNIT_PET(event, unit)
 	end
 end
 
-local knownSpells = {}
 function mod:UpdateSpells(event)
-	wipe(knownSpells)
-	for index = 1, math.huge do
-		local link = GetSpellLink(index, BOOKTYPE_SPELL)
-		if link then
-			if not IsPassiveSpell(index, BOOKTYPE_SPELL) then
-				self:Debug('Watch for pet spell', link)
-				local id = tonumber(strmatch(link, "spell:(%d+)"))
-				knownSpells[id] = true
-			end
-		else
-			break
-		end
-	end
-
 	for unit, spells in pairs(GetWatchers()) do
 		for id, callback in pairs(spells) do
-			if id < 0 or knownSpells[id] then
-				if not watchers[unit] then
-					self:Debug('Watching', unit, 'auras')
-					watchers[unit] = { [id] = callback }
-				else
-					watchers[unit][id] = callback
-				end
-				self:Debug('Watching for', GetSpellInfo(id), '(#'..id..')', 'on', unit)
-			elseif watchers[unit] then
-				watchers[unit][id] = nil
+			if not watchers[unit] then
+				self:Debug('Watching', unit, 'auras')
+				watchers[unit] = { [id] = callback }
+			else
+				watchers[unit][id] = callback
 			end
+			self:Debug('Watching for', GetSpellInfo(id), '(#'..id..')', 'on', unit)
 		end
 		if watchers[unit] and not next(watchers[unit]) then
 			watchers[unit] = nil
