@@ -97,7 +97,7 @@ end
 
 function mod:UpdateEnabledState(event)
 	self:Debug('UpdateEnabledState', event)
-	local primaryTree = GetSpecialization()
+	local primaryTree = (UnitLevel("player") < 10) and true or GetSpecialization()
 	if not primaryTree then
 		if event == "OnInitialize" then
 			self.RegisterEvent(self.name, "PLAYER_ALIVE", function(event)
@@ -121,7 +121,9 @@ function mod:UpdateEnabledState(event)
 		MergeSpells(spells, COOLDOWNS.COMMON)
 		if COOLDOWNS[class] then
 			MergeSpells(spells, COOLDOWNS[class]['*'])
-			MergeSpells(spells, COOLDOWNS[class][primaryTree])
+			if primaryTree ~= true then
+				MergeSpells(spells, COOLDOWNS[class][primaryTree])
+			end
 		end
 		for id, name in Spellbook:IterateSpells(BOOKTYPE_PET) do
 			if not IsPassiveSpell(id, BOOKTYPE_PET) then
