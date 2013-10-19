@@ -6,7 +6,7 @@
 ## Version: @project-version@
 ## SavedVariables: AdiSpellHUDDB
 ## X-Date: @project-date-iso@
-## OptionalDeps: LibStub, CallbackHandler-1.0, Ace3, LibMovable-1.0, LibDualSpec-1.0, AdiDebug
+## OptionalDeps: LibStub, CallbackHandler-1.0, Ace3, LibMovable-1.0, LibDualSpec-1.0, AdiDebug, LibSpellbook-1.0
 
 #@no-lib-strip@
 libs\LibStub\LibStub.lua
@@ -26,6 +26,7 @@ libs\LibDualSpec-1.0\LibDualSpec-1.0.lua
 # Not on wowace.com
 libs\LibSpellWidget-1.0\lib.xml
 libs\LibMovable-1.0\LibMovable-1.0.lua
+libs\LibSpellbook-1.0\LibSpellbook-1.0.lua
 
 Localization.lua
 AdiSpellHUD.lua

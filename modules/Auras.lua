@@ -7,6 +7,7 @@ All rights reserved.
 local addonName, addon = ...
 
 local mod = addon:NewModule("Auras", "AceEvent-3.0", "LibMovable-1.0", "LibSpellWidget-1.0")
+local Spellbook = LibStub("LibSpellbook-1.0")
 
 local GetWatchers
 GetWatchers = function()
@@ -142,14 +143,15 @@ function mod:OnEnable()
 	end
 
 	self.frame:SetAlpha(prefs.alpha)
-	self:RegisterEvent('SPELLS_CHANGED', 'UpdateSpells')
 	self:RegisterEvent('PLAYER_ENTERING_WORLD', 'UpdateAll')
+	Spellbook.RegisterCallback(self, "LibSpellbook_Spells_Changed", "UpdateSpells")
 
 	self:UpdateSpells('OnEnable')
 end
 
 function mod:OnDisable()
 	self.frame:Hide()
+	Spellbook.UnregisterAllCallbacks(self)
 end
 
 local function CompareWidgets(a, b)
@@ -258,13 +260,15 @@ end
 function mod:UpdateSpells(event)
 	for unit, spells in pairs(GetWatchers()) do
 		for id, callback in pairs(spells) do
-			if not watchers[unit] then
-				self:Debug('Watching', unit, 'auras')
-				watchers[unit] = { [id] = callback }
-			else
-				watchers[unit][id] = callback
+			if Spellbook:IsKnown(id) then
+				if not watchers[unit] then
+					self:Debug('Watching', unit, 'auras')
+					watchers[unit] = { [id] = callback }
+				else
+					watchers[unit][id] = callback
+				end
+				self:Debug('Watching for', GetSpellInfo(id), '(#'..id..')', 'on', unit)
 			end
-			self:Debug('Watching for', GetSpellInfo(id), '(#'..id..')', 'on', unit)
 		end
 		if watchers[unit] and not next(watchers[unit]) then
 			watchers[unit] = nil

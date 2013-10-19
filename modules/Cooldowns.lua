@@ -6,6 +6,7 @@ All rights reserved.
 
 local addonName, addon = ...
 local mod = addon:NewModule("Cooldowns", "AceEvent-3.0", "LibMovable-1.0")
+local Spellbook = LibStub("LibSpellbook-1.0")
 
 --------------------------------------------------------------------------------
 -- Consts and upvalues
@@ -67,9 +68,9 @@ function mod:OnInitialize()
 	self.petSpells = {}
 	
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
-	self.RegisterEvent(self.name, "SPELLS_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "PLAYER_TALENT_UPDATE", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UNIT_INVENTORY_CHANGED, self)
+	Spellbook.RegisterCallback(self, "LibSpellbook_Spells_Changed", "UpdateEnabledState")
 	self:UpdateEnabledState("OnInitialize")
 
 	self.unusedOverlays = {}
@@ -86,7 +87,7 @@ local function MergeSpells(dst, src)
 			if not cond then
 				dst[spellID] = nil
 				mod:Debug('Do not watch for', GetSpellInfo(spellID))
-			elseif IsSpellKnown(spellID) then
+			elseif Spellbook:IsKnown(spellID) then
 				mod:Debug('Watch for', (GetSpellInfo(spellID)))
 				dst[spellID] = true
 			end
@@ -122,19 +123,12 @@ function mod:UpdateEnabledState(event)
 			MergeSpells(spells, COOLDOWNS[class]['*'])
 			MergeSpells(spells, COOLDOWNS[class][primaryTree])
 		end
-		if HasPetSpells() then
-			for index = 1, math.huge do
-				local link = GetSpellLink(index, BOOKTYPE_PET)
-				if link then
-					if not IsPassiveSpell(index, BOOKTYPE_PET) then
-						self:Debug('Watch for pet spell', link)
-						local id = tonumber(strmatch(link, "spell:(%d+)"))
-						spells[id] = true
-						petSpells[id] = index
-					end
-				else
-					break
-				end				
+		for id, name in Spellbook:IterateSpells(BOOKTYPE_PET) do
+			if not IsPassiveSpell(id, BOOKTYPE_PET) then
+				self:Debug('Watch for pet spell', link)
+				local id = tonumber(strmatch(link, "spell:(%d+)"))
+				spells[id] = true
+				petSpells[id] = index
 			end
 		end
 		for index = 1, 18 do
@@ -450,40 +444,41 @@ end
 COOLDOWNS = {
 	COMMON = {
 		-- Lifeblood (8 ranks)
-		[81780] = true,
-		[55428] = true,
-		[55480] = true,
-		[55500] = true,
-		[55501] = true,
-		[55502] = true,
-		[55503] = true,
-		[74497] = true,
+		[ 81780] = true,
+		[ 55428] = true,
+		[ 55480] = true,
+		[ 55500] = true,
+		[ 55501] = true,
+		[ 55502] = true,
+		[ 55503] = true,
+		[ 74497] = true,
 		-- Racial traits
-		[28730] = true, -- Arcane Torrent (mana)
-		[50613] = true, -- Arcane Torrent (runic power)
-		[80483] = true, -- Arcane Torrent (focus)
-		[25046] = true, -- Arcane Torrent (energy)
-		[69179] = true, -- Arcane Torrent (rage)
-		[26297] = true, -- Berseking
-		[20542] = true, -- Blood Fury (attack power)
-		[33702] = true, -- Blood Fury (spell power)
-		[33697] = true, -- Blood Fury (both)
-		[68992] = true, -- Darkflight
-		[20589] = true, -- Escape Artist
-		[59752] = true, -- Every Man for Himself
-		[69041] = true, -- Rocket Barrage
-		[69070] = true, -- Rocket Jump
-		[58984] = true, -- Shadowmeld
-		[20594] = true, -- Stoneform
-		[20549] = true, -- War Stomp
-		[ 7744] = true, -- Will of the Forsaken
-		[59545] = true, -- Gift of the Naaru
-		[59543] = true, -- Gift of the Naaru
-		[59548] = true, -- Gift of the Naaru
-		[59542] = true, -- Gift of the Naaru
-		[59544] = true, -- Gift of the Naaru
-		[59547] = true, -- Gift of the Naaru
-		[28880] = true, -- Gift of the Naaru
+		[ 28730] = true, -- Arcane Torrent (mana)
+		[ 50613] = true, -- Arcane Torrent (runic power)
+		[ 80483] = true, -- Arcane Torrent (focus)
+		[ 25046] = true, -- Arcane Torrent (energy)
+		[ 69179] = true, -- Arcane Torrent (rage)
+		[ 26297] = true, -- Berseking
+		[ 20542] = true, -- Blood Fury (attack power)
+		[ 33702] = true, -- Blood Fury (spell power)
+		[ 33697] = true, -- Blood Fury (both)
+		[ 68992] = true, -- Darkflight
+		[ 20589] = true, -- Escape Artist
+		[ 59752] = true, -- Every Man for Himself
+		[ 69041] = true, -- Rocket Barrage
+		[ 69070] = true, -- Rocket Jump
+		[ 58984] = true, -- Shadowmeld
+		[ 20594] = true, -- Stoneform
+		[ 20549] = true, -- War Stomp
+		[  7744] = true, -- Will of the Forsaken
+		[ 59545] = true, -- Gift of the Naaru
+		[ 59543] = true, -- Gift of the Naaru
+		[ 59548] = true, -- Gift of the Naaru
+		[ 59542] = true, -- Gift of the Naaru
+		[ 59544] = true, -- Gift of the Naaru
+		[ 59547] = true, -- Gift of the Naaru
+		[ 28880] = true, -- Gift of the Naaru
+		[107079] = true, -- Quaking Palm
 	},
 	DRUID = {
 		['*'] = {
@@ -602,4 +597,15 @@ COOLDOWNS = {
 			[120451] = true, -- Flames of Xororth
 		},
 	},
+	MONK = {
+		['*'] = {
+			[109132] = true, -- Roll
+		},
+		-- Brewmaster
+		[1] = {},
+		-- Mistweaver
+		[2] = {},
+		-- Windwalker
+		[3] = {},
+	}
 }

@@ -37,3 +37,9 @@ externals:
   libs/LibDualSpec-1.0:
     url: git://git.wowace.com/wow/libdualspec-1-0/mainline.git
     tag: latest
+  libs/LibSpellbook-1.0:
+    url: git://github.com/Adirelle//LibSpellbook-1.0.git
+    tag:latest
+  libs/LibMovable-1.0: 
+    url: git://github.com/Adirelle//LibMovable-1.0.git
+    tag:latest
