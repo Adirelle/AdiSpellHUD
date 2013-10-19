@@ -577,6 +577,7 @@ COOLDOWNS = {
 			[108501] = true, -- Grimore of Service
 			[110913] = true, -- Dark Bargain
 			[111397] = true, -- Blood Horror
+			[132411] = true, -- Singe Magic (sacrified Imp)
 		},
 		-- Affliction
 		[1] = {
