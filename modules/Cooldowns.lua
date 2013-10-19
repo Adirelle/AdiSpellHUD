@@ -603,12 +603,22 @@ COOLDOWNS = {
 	MONK = {
 		['*'] = {
 			[109132] = true, -- Roll
+			[113656] = true, -- Fists of Fury
+			[115072] = true, -- Expel Harm
+			[121827] = true, -- Roll modified by Celerity
 		},
 		-- Brewmaster
-		[1] = {},
+		[1] = {
+			[115176] = true, -- Zen Meditation
+			[115203] = true, -- Fortifying Brew
+			[115213] = true, -- Avert Harm
+			[115295] = true, -- Guard
+			[128253] = true, -- Keg Smash
+		},
 		-- Mistweaver
 		[2] = {},
 		-- Windwalker
-		[3] = {},
+		[3] = {
+		},
 	}
 }
