@@ -65,6 +65,30 @@ GetWatchers = function()
 			[104025] = OwnAuraGetter(104025), -- Immolation Aura (Metamorphosis/Dark Apotheosis)
 			[132413] = OwnAuraGetter(132413), -- Shadow Bulwark (Grimoire of Sacrifice)
 		}
+	elseif class == 'MONK' then
+		local staggerLevels = {
+			[124273] = GetSpellInfo(124273),
+			[124274] = GetSpellInfo(124274),
+			[124275] = GetSpellInfo(124275)
+		}
+		local guard = GetSpellInfo(115295)
+		aurasToWatch.player = {
+			-- Stagger is provided by the Stance of the Sturdy Ox
+			[115069] = function(unit)
+				for spell, name in pairs(staggerLevels) do
+					if UnitDebuff(unit, name) then
+						return spell, select(15, UnitDebuff(unit, name)), 0, 0
+					end
+				end
+			end,
+			[115203] = OwnAuraGetter(115203), -- Fortifying Brew
+			[115295] = function(unit)
+				local name, _, _, count, _, duration, expirationTime = UnitBuff(unit, guard)
+				if name then
+					return 115295, select(15, UnitBuff(unit, guard)), duration, expirationTime
+				end
+			end,
+		}
 	else
 		aurasToWatch.player = {}
 	end
