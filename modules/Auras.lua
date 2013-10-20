@@ -284,7 +284,7 @@ end
 function mod:UpdateSpells(event)
 	for unit, spells in pairs(GetWatchers()) do
 		for id, callback in pairs(spells) do
-			if Spellbook:IsKnown(id) then
+			if id < 0 or Spellbook:IsKnown(id) then
 				if not watchers[unit] then
 					self:Debug('Watching', unit, 'auras')
 					watchers[unit] = { [id] = callback }
