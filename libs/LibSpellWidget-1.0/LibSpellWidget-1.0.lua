@@ -4,7 +4,7 @@ LibSpellWidget-1.0 - Simple library to display spell widget, with countdown and 
 All rights reserved.
 --]]
 
-local MAJOR, MINOR = 'LibSpellWidget-1.0', 1
+local MAJOR, MINOR = 'LibSpellWidget-1.0', 2
 local lib, oldMinor = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 oldMinor = oldMinor or 0
@@ -34,7 +34,10 @@ function proto:SetCount(count)
 	count = tonumber(count) or 0
 	if count ~= self.count then
 		self.count = count
-		if count > 0 then
+		if count >= 10000 then
+			self.Count:SetFormattedText("%dk", floor(count/1000))
+			self.Count:Show()
+		elseif count > 0 then
 			self.Count:SetFormattedText("%d", count)
 			self.Count:Show()
 		else
