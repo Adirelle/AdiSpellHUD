@@ -30,16 +30,20 @@ function proto:SetSpell(spell)
 	end
 end
 
+local fontFile, fontSize, fontFlags = GameFontNormal:GetFont(), 13, "OUTLINE"
 function proto:SetCount(count)
 	count = tonumber(count) or 0
 	if count ~= self.count then
 		self.count = count
-		if count >= 10000 then
-			self.Count:SetFormattedText("%dk", floor(count/1000))
-			self.Count:Show()
-		elseif count > 0 then
-			self.Count:SetFormattedText("%d", count)
-			self.Count:Show()
+		if count > 0 then
+			local text = self.Count
+			text:SetFormattedText("%d", count)
+			text:SetFont(fontFile, fontSize, fontFlags)
+			text:Show()
+			local overflowRatio = text:GetStringWidth() / (self:GetWidth() - 8)
+			if overflowRatio > 1 then
+				return text:SetFont(fontFile, max(5, fontSize / overflowRatio), fontFlags)
+			end
 		else
 			self.Count:Hide()
 		end
