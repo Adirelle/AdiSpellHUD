@@ -147,6 +147,7 @@ function mod:UpdateOverlaysInUse()
 end
 
 function mod:UpdateOverlay(overlay, duration, expires, count)
+	if not overlay.text then return end
 	if duration and duration > 0 then
 		overlay.expires = expires
 		overlay.duration = duration
