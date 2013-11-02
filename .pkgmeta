@@ -39,7 +39,7 @@ externals:
     tag: latest
   libs/LibSpellbook-1.0:
     url: git://github.com/Adirelle//LibSpellbook-1.0.git
-    tag:latest
+    tag: latest
   libs/LibMovable-1.0: 
     url: git://github.com/Adirelle//LibMovable-1.0.git
-    tag:latest
+    tag: latest
