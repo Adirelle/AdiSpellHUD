@@ -126,9 +126,9 @@ function mod:UpdateEnabledState(event)
 			end
 		end
 		for id, name in Spellbook:IterateSpells(BOOKTYPE_PET) do
-			if not IsPassiveSpell(id, BOOKTYPE_PET) then
-				self:Debug('Watch for pet spell', link)
-				local id = tonumber(strmatch(link, "spell:(%d+)"))
+			self:Debug("pet spell:", id, name)
+			if not IsPassiveSpell(id) then
+				self:Debug('Watch for pet spell', name)
 				spells[id] = true
 				petSpells[id] = index
 			end
