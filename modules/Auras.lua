@@ -129,6 +129,24 @@ GetWatchers = function()
 		end
 	end
 
+	-- Item buffs
+	local LibItemBuffs = LibStub("LibItemBuffs-1.0")
+	for i, slot in ipairs(LibItemBuffs:GetInventorySlotList()) do
+		local slot = slot
+		aurasToWatch.player[-100-i] = function(unit)
+			for index = 1, 128 do
+				local name, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, index)
+				if name then
+					if LibItemBuffs:GetBuffInventorySlot(spell) == slot then
+						return spell, count, duration, expirationTime
+					end
+				else
+					return
+				end
+			end
+		end
+	end
+
 	return aurasToWatch
 end
 
