@@ -442,7 +442,7 @@ end
 
 COOLDOWNS = {
 	COMMON = {
-		-- Lifeblood (8 ranks)
+		-- Lifeblood (9 ranks)
 		[ 81780] = true,
 		[ 55428] = true,
 		[ 55480] = true,
@@ -451,6 +451,7 @@ COOLDOWNS = {
 		[ 55502] = true,
 		[ 55503] = true,
 		[ 74497] = true,
+		[121279] = true,
 		-- Racial traits
 		[ 28730] = true, -- Arcane Torrent (mana)
 		[ 50613] = true, -- Arcane Torrent (runic power)
@@ -617,5 +618,18 @@ COOLDOWNS = {
 		[3] = {
 			[113656] = true, -- Fists of Fury
 		},
-	}
+	},
+	SHAMAN = {
+		['*'] = {
+			-- See https://github.com/Adirelle/AdiSpellHUD/issues/1
+			[  2062] = true, -- Earth Elemental
+			[  2894] = true, -- Fire Elemental
+			[ 30823] = true, -- Shamanistic Rage
+			[ 51490] = true, -- Thunderstorm
+			[ 79206] = true, -- Spiritwalker's Grace
+			[108270] = true, -- Stone Bullwark Totem
+			[108281] = true, -- Ancestral Guidance
+			[114049] = true, -- Ascendence
+		}
+	},
 }
