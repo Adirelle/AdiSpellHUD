@@ -121,7 +121,7 @@ GetWatchers = function()
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell, _, isBossDebuff = UnitDebuff(unit, index)
 			if name then
 				if isBossDebuff then
-					callback(spell, count, duration, expirationTime, true)
+					callback(spell, count, duration, expirationTime)
 				end
 			else
 				return
