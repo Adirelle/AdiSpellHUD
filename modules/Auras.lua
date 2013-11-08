@@ -269,6 +269,7 @@ end
 
 local function SpawnAnimation(widget)
 	local anim = widget:CreateAnimationGroup()
+	anim:SetIgnoreFramerateThrottle(true)
 
 	local scaleIn = anim:CreateAnimation("Animation")
 	scaleIn.widget = widget

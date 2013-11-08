@@ -313,6 +313,7 @@ function mod:CreateOverlay()
 	overlay.texture = texture
 	
 	local animation = overlay:CreateAnimationGroup()
+	animation:SetIgnoreFramerateThrottle(true)
 	animation:SetScript('OnFinished', Animation_OnFinished)
 	overlay.animation = animation
 
