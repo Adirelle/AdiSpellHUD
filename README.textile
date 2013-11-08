@@ -1,0 +1,40 @@
+h1. AdiSpellHUD
+
+Spell overlay customization and spell state HUD.
+
+The configuration panel is available using the standard addon menu.
+
+h2. Class and spell support
+
+The spells supported by the cooldown and aura modules are hard-coded. To keep them simple, I am not planning to add a configuration UI. However, contributions are welcome. I accept pull requests on github.com as long as you respect these four rules: indent with tabs, align with spaces, remove trailing spaces and comment in english.
+
+h2. Modules
+
+AdiSpellHUD is composed of three modules, that can be enabled/disabled separately.
+
+h3. Cooldowns
+
+Displays a big flashing icon in the center of the screen each time a configured cooldown finishes.
+
+Configuration options:
+* cooldowns to show,
+* size, opacity and position of the animation.
+
+h3. Auras
+
+Displays a bar of icons for important (de)buffs. Tracks class spells, trinket and enchant procs, encounter debuffs and bloodlust.
+
+Configuration options:
+* auras to show,
+* size, opacity and position of the icon bar.
+
+h3. Spell overlay customization
+
+Displays a countdown on Blizzard fullscreen animations. You can also resize and move them.
+
+Configuration options:
+* size, opacity and position of the overlays.
+
+h2. License
+
+AdiSpellHUD is licensed using the GPL v3.
