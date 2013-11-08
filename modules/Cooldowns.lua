@@ -37,10 +37,7 @@ local MODELS = {
 		end,
 		GetCooldown = GetSpellCooldown, 
 		GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
-		IsMuted = function(id)
-			local index = mod.petSpells[id]
-			return index and select(2, GetSpellAutocast(index, "pet"))
-		end,		
+		IsMuted = GetSpellAutocast,
 	},
 	items = {
 		GetInfo = function(id)
