@@ -39,7 +39,6 @@ GetWatchers = function()
 		aurasToWatch.player = {
 			[ 19263] = OwnAuraGetter( 19263), -- Deterrence
 			[ 34477] = OwnAuraGetter( 34477), -- Misdirection
-			[ 56343] = OwnAuraGetter( 56343), -- Lock and Load
 			[ 53224] = OwnAuraGetter( 53224), -- Improved Steady Shot
 			[  3045] = OwnAuraGetter(  3045), -- Rapid Fire
 		}
@@ -50,19 +49,17 @@ GetWatchers = function()
 			[ 33886] = OwnAuraGetter( 96206), -- Swift Rejuvenation
 			[ 77495] = OwnAuraGetter(100977), -- Mastery: Harmony => Harmony
 			[106922] = OwnAuraGetter(106922), -- Might of Ursoc
-			[113043] = OwnAuraGetter( 16870), -- Omen of Clarity => Clearcasting
 			[114107] = OwnAuraGetter(114107), -- Soul of the Forest
 			[124974] = OwnAuraGetter(124974), -- Nature's Vigil
 		}
 	elseif class == 'WARLOCK' then
 		aurasToWatch.player = {
 			[113858] = OwnAuraGetter(113858), -- Dark Soul: Instability
-			[117896] = OwnAuraGetter(117896), -- Backdraft
+			[113860] = OwnAuraGetter(113860), -- Dark Soul: Misery
+			[113861] = OwnAuraGetter(113861), -- Dark Soul: Knowledge
 			[ 80240] = OwnAuraGetter( 80240), -- Havoc
 			[104773] = OwnAuraGetter(104773), -- Unending Resolve
 			[119839] = OwnAuraGetter(119839), -- Fury Ward (Dark Apotheosis)
-			[116198] = OwnAuraGetter(116198), -- Aura of Enfeeblement (Metamorphosis/Dark Apotheosis)
-			[104025] = OwnAuraGetter(104025), -- Immolation Aura (Metamorphosis/Dark Apotheosis)
 			[132413] = OwnAuraGetter(132413), -- Shadow Bulwark (Grimoire of Sacrifice)
 		}
 	elseif class == 'MONK' then
@@ -82,7 +79,7 @@ GetWatchers = function()
 				end
 			end,
 			[115203] = OwnAuraGetter(115203), -- Fortifying Brew
-			[115295] = function(unit, id, callback)
+			[115295] = function(unit, id, callback) -- Guard
 				local name, _, _, count, _, duration, expirationTime = UnitBuff(unit, guard)
 				if name then
 					return callback(115295, select(15, UnitBuff(unit, guard)), duration, expirationTime)
