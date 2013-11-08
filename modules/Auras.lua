@@ -19,7 +19,7 @@ GetWatchers = function()
 	local _, class = UnitClass('player')
 
 	-- Helper
-	local function OwnAuraGetter(spell, harmful)
+	local function OwnAuraGetter(spell, harmful, callback)
 		local name = GetSpellInfo(spell)
 		if not name then
 			geterrorhandler()("Unknown spell id", spell)
@@ -29,11 +29,11 @@ GetWatchers = function()
 		return function(unit)
 			local name, _, _, count, _, duration, expirationTime = UnitAura(unit, name, nil, filter)
 			if name then
-				return spell, count, duration, expirationTime
+				return callback(spell, count, duration, expirationTime)
 			end
 		end
 	end
-	
+
 	-- Callback signature : spell, count, duration, expires = callback(unit, id)
 	if class == 'HUNTER' then
 		aurasToWatch.player = {
@@ -74,18 +74,18 @@ GetWatchers = function()
 		local guard = GetSpellInfo(115295)
 		aurasToWatch.player = {
 			-- Stagger is provided by the Stance of the Sturdy Ox
-			[115069] = function(unit)
+			[115069] = function(unit, id, callback)
 				for spell, name in pairs(staggerLevels) do
 					if UnitDebuff(unit, name) then
-						return spell, select(15, UnitDebuff(unit, name)), 0, 0
+						return callback(spell, select(15, UnitDebuff(unit, name)), 0, 0)
 					end
 				end
 			end,
 			[115203] = OwnAuraGetter(115203), -- Fortifying Brew
-			[115295] = function(unit)
+			[115295] = function(unit, id, callback)
 				local name, _, _, count, _, duration, expirationTime = UnitBuff(unit, guard)
 				if name then
-					return 115295, select(15, UnitBuff(unit, guard)), duration, expirationTime
+					return callback(115295, select(15, UnitBuff(unit, guard)), duration, expirationTime)
 				end
 			end,
 		}
@@ -109,40 +109,40 @@ GetWatchers = function()
 			geterrorhandler()("Spell not found: "..id)
 		end
 	end
-	aurasToWatch.player[-1] = function(unit)
+	aurasToWatch.player[-1] = function(unit, id, callback)
 		for i, name in ipairs(hasteCooldowns) do
 			local found, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, name)
 			if found then
-				return spell, count, duration, expirationTime
+				return callback(spell, count, duration, expirationTime)
 			end
 		end
 	end
 
 	-- Encounter debuffs
-	for i = 1, 4 do
-		local index = i
-		aurasToWatch.player[-1-i] = function(unit)
+	aurasToWatch.player[-2] = function(unit, id, callback)
+		for index = 1, 128 do
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell, _, isBossDebuff = UnitDebuff(unit, index)
-			if name and isBossDebuff then
-				return spell, count, duration, expirationTime
+			if name then
+				if isBossDebuff then
+					callback(spell, count, duration, expirationTime)
+				end
+			else
+				return
 			end
 		end
 	end
 
 	-- Item buffs
 	local LibItemBuffs = LibStub("LibItemBuffs-1.0")
-	for i, slot in ipairs(LibItemBuffs:GetInventorySlotList()) do
-		local slot = slot
-		aurasToWatch.player[-100-i] = function(unit)
-			for index = 1, 128 do
-				local name, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, index)
-				if name then
-					if LibItemBuffs:GetBuffInventorySlot(spell) == slot then
-						return spell, count, duration, expirationTime
-					end
-				else
-					return
+	aurasToWatch.player[-3] = function(unit, id, callback)
+		for index = 1, 128 do
+			local name, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, index)
+			if name then
+				if LibItemBuffs:IsItemBuff(spell) then
+					callback(spell, count, duration, expirationTime)
 				end
+			else
+				return
 			end
 		end
 	end
@@ -166,6 +166,8 @@ local DEFAULT_SETTINGS = {
 
 local watchers = {}
 local widgets = {}
+local gen = 0
+local needLayout = false
 
 function mod:OnInitialize()
 	self.db = addon.db:RegisterNamespace(self.moduleName, DEFAULT_SETTINGS)
@@ -174,7 +176,7 @@ end
 
 function mod:OnEnable()
 	prefs = self.db.profile
-	
+
 	if not self.frame then
 		local frame = CreateFrame("Frame", nil, UIParent)
 		frame:SetPoint("RIGHT", UIParent, "CENTER", -400, 0)
@@ -210,7 +212,6 @@ end
 
 local order = {}
 function mod:Layout()
-	local iconSize = prefs.size
 	if next(widgets) then
 		self.frame:Show()
 	else
@@ -223,7 +224,8 @@ function mod:Layout()
 		tinsert(order, widget)
 	end
 	table.sort(order, CompareWidgets)
-	
+
+	local iconSize = prefs.size
 	for i, widget in ipairs(order) do
 		widget:ClearAllPoints()
 		widget:SetSize(iconSize, iconSize)
@@ -237,42 +239,51 @@ end
 
 function mod.OnWidgetReleased(widget)
 	widgets[widget.id] = nil
-	mod:Layout()
+end
+
+function mod:SpawnWidget(id, spell, count, duration, expires)
+	widget = self:AcquireSpellWidget(prefs.size, spell, count, duration, expires)
+	widget:SetParent(self.frame)
+	widget.OnCooldownEnd = widget.Release
+	widget.OnRelease = self.OnWidgetReleased
+	widget.id = id
+	widgets[id] = widget
+	return widget
+end
+
+local function ReuseOrSpawnWidget(spell, count, duration, expires)
+	local id = spell
+	local widget = widgets[id]
+	if widget then
+		mod:Debug(id, 'Update widget', spell, count, duration, expires)
+		widget:SetSpell(spell)
+		widget:SetTimeleft(duration, expires)
+		widget:SetCount(count)
+	else
+		mod:Debug(id, 'New widget', spell, count, duration, expires)
+		widget = mod:SpawnWidget(id, spell, count, duration, expires)
+	end
+	widget.gen = gen
 end
 
 function mod:Update(event, unit)
 	if not watchers[unit] then return end
 	local allowed = self.db.class.spells
 	self:Debug('Update', event, unit)
-	local needLayout = false
+
+	gen = (gen + 1) % 10000
 	for id, callback in pairs(watchers[unit]) do
-		local spell, count, duration, expires = callback(unit, id)
-		if spell and allowed[id] then
-			local widget = widgets[id]
-			if widget then
-				self:Debug(spell, 'Update widget', spell, count, duration, expires)
-				widget:SetSpell(spell)
-				widget:SetTimeleft(duration, expires)
-				widget:SetCount(count)
-				needLayout = true
-			else
-				self:Debug(spell, 'New widget', spell, count, duration, expires)
-				widget = self:AcquireSpellWidget(prefs.size, spell, count, duration, expires)
-				widget:SetParent(self.frame)
-				widget.OnCooldownEnd = widgets.Release
-				widget.OnRelease = self.OnWidgetReleased
-				widget.id = id
-				widgets[id] = widget
-				needLayout = true
-			end
-		elseif widgets[id] then
-			widgets[id]:Release()
-			needLayout = true
+		if allowed[id] then
+			callback(unit, id, ReuseOrSpawnWidget)
 		end
 	end
-	if needLayout then
-		self:Layout()
+	for spell, widget in pairs(widgets) do
+		if widget.gen ~= gen then
+			widget:Release()
+		end
 	end
+
+	self:Layout()
 end
 
 function mod:UpdateAll(event)
