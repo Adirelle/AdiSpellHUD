@@ -26,7 +26,7 @@ GetWatchers = function()
 			return function() end
 		end
 		local filter = "PLAYER|" .. (harmful and "HARMFUL" or "HELPFUL")
-		return function(unit)
+		return function(unit, id, callback)
 			local name, _, _, count, _, duration, expirationTime = UnitAura(unit, name, nil, filter)
 			if name then
 				return callback(spell, count, duration, expirationTime)
