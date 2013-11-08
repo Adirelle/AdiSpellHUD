@@ -6,6 +6,8 @@
 ## Version: @project-version@
 ## SavedVariables: AdiSpellHUDDB
 ## X-Date: @project-date-iso@
+## X-License: GPL v3
+## X-eMail: adirelle@gmail.com
 ## OptionalDeps: LibStub, CallbackHandler-1.0, Ace3, LibMovable-1.0, LibDualSpec-1.0, AdiDebug, LibSpellbook-1.0, LibItemBuffs-1.0
 
 #@no-lib-strip@
