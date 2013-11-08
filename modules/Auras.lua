@@ -19,7 +19,7 @@ GetWatchers = function()
 	local _, class = UnitClass('player')
 
 	-- Helper
-	local function OwnAuraGetter(spell, harmful, callback)
+	local function OwnAuraGetter(spell, important, harmful)
 		local name = GetSpellInfo(spell)
 		if not name then
 			geterrorhandler()("Unknown spell id", spell)
@@ -29,7 +29,7 @@ GetWatchers = function()
 		return function(unit, id, callback)
 			local name, _, _, count, _, duration, expirationTime = UnitAura(unit, name, nil, filter)
 			if name then
-				return callback(spell, count, duration, expirationTime)
+				return callback(spell, count, duration, expirationTime, important)
 			end
 		end
 	end
@@ -113,7 +113,7 @@ GetWatchers = function()
 		for i, name in ipairs(hasteCooldowns) do
 			local found, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, name)
 			if found then
-				return callback(spell, count, duration, expirationTime)
+				return callback(spell, count, duration, expirationTime, true)
 			end
 		end
 	end
@@ -124,7 +124,7 @@ GetWatchers = function()
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell, _, isBossDebuff = UnitDebuff(unit, index)
 			if name then
 				if isBossDebuff then
-					callback(spell, count, duration, expirationTime)
+					callback(spell, count, duration, expirationTime, true)
 				end
 			else
 				return
@@ -139,7 +139,7 @@ GetWatchers = function()
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, index)
 			if name then
 				if LibItemBuffs:IsItemBuff(spell) then
-					callback(spell, count, duration, expirationTime)
+					callback(spell, count, duration, expirationTime, true)
 				end
 			else
 				return
@@ -157,6 +157,7 @@ local DEFAULT_SETTINGS = {
 		alpha = 0.6,
 		size = 32,
 		spacing = 4,
+		animation = true,
 		anchor = { }
 	},
 	class = {
@@ -237,7 +238,41 @@ function mod:Layout()
 	end
 end
 
+local function ScaleIn_OnPlay(anim)
+	anim.widget.Cooldown:Hide()
+	anim.widget.Icon:ClearAllPoints()
+	anim.widget.Icon:SetPoint("CENTER", anim.widget)
+end
+
+local function ScaleIn_OnUpdate(anim)
+	local f = 3 - 2 * anim:GetSmoothProgress()
+	local w, h = anim.widget:GetSize()
+	anim.widget.Icon:SetSize(f * w, f * h)
+end
+
+local function ScaleIn_OnFinished(anim)
+	anim.widget.Cooldown:Show()
+	anim.widget.Icon:SetAllPoints(anim.widget)
+end
+
+local function SpawnAnimation(widget)
+	local anim = widget:CreateAnimationGroup()
+
+	local scaleIn = anim:CreateAnimation("Animation")
+	scaleIn.widget = widget
+	scaleIn:SetOrder(1)
+	scaleIn:SetDuration(0.3)
+	scaleIn:SetScript('OnPlay', ScaleIn_OnPlay)
+	scaleIn:SetScript('OnUpdate', ScaleIn_OnUpdate)
+	scaleIn:SetScript('OnFinished', ScaleIn_OnFinished)
+
+	return anim
+end
+
 function mod.OnWidgetReleased(widget)
+	if widget.animIn and widget.animIn:IsPlaying() then
+		widget.animIn:Stop()
+	end
 	widgets[widget.id] = nil
 end
 
@@ -251,7 +286,8 @@ function mod:SpawnWidget(id, spell, count, duration, expires)
 	return widget
 end
 
-local function ReuseOrSpawnWidget(spell, count, duration, expires)
+
+local function ReuseOrSpawnWidget(spell, count, duration, expires, important)
 	local id = spell
 	local widget = widgets[id]
 	if widget then
@@ -262,6 +298,16 @@ local function ReuseOrSpawnWidget(spell, count, duration, expires)
 	else
 		mod:Debug(id, 'New widget', spell, count, duration, expires)
 		widget = mod:SpawnWidget(id, spell, count, duration, expires)
+		if important and prefs.animation then
+			if not widget.animIn then
+				mod:Debug('Spawning animation')
+				widget.animIn = SpawnAnimation(widget)
+			end
+			if not widget.animIn:IsPlaying() then
+				mod:Debug('Launching animation')
+				widget.animIn:Play()
+			end
+		end
 	end
 	widget.gen = gen
 end
@@ -418,6 +464,12 @@ function mod:GetOptions()
 				max = 1.0,
 				step = 0.01,
 				bigStep = 0.1,
+			},
+			animation = {
+				name = L['Animation'],
+				desc = L['Play an animation for important buffs (trinket/enchant procs and encounter spells).'],
+				type = 'toggle',
+				order = 60,
 			},
 			unlock = {
 				name = function()
