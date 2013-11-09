@@ -179,6 +179,7 @@ local DEFAULT_SETTINGS = {
 
 local watchers = {}
 local widgets = {}
+local pool = {}
 local gen = 0
 local needLayout = false
 
@@ -211,7 +212,12 @@ function mod:OnDisable()
 	Spellbook.UnregisterAllCallbacks(self)
 end
 
+--------------------------------------------------------------------------------
+-- Bar layout
+--------------------------------------------------------------------------------
+
 local function CompareWidgets(a, b)
+	local a, b = a.spell, b.spell
 	if a.expires == b.expires then
 		if a.duration == b.duration then
 			return GetSpellInfo(a.spell) < GetSpellInfo(b.spell)
@@ -250,80 +256,125 @@ function mod:Layout()
 	end
 end
 
-local function ScaleIn_OnPlay(anim)
-	anim.widget.Cooldown:Hide()
-	anim.widget.Icon:ClearAllPoints()
-	anim.widget.Icon:SetPoint("CENTER", anim.widget)
+--------------------------------------------------------------------------------
+-- Widget handling
+--------------------------------------------------------------------------------
+
+local widgetParent = CreateFrame("Frame")
+local widgetProto = setmetatable({}, { __index = widgetParent })
+local widgetMeta = { __index = widgetProto }
+
+function widgetProto:SetSize(w, h)
+	widgetParent.SetSize(self, w, h)
+	self.spell:SetSize(w, h)
 end
 
-local function ScaleIn_OnUpdate(anim)
-	local f = 3 - 2 * anim:GetSmoothProgress()
-	local w, h = anim.widget:GetSize()
-	anim.widget.Icon:SetSize(f * w, f * h)
+function widgetProto:OnAcquire(id, spell, count, duration, expires)
+	self.id = id
+	local spell = mod:AcquireSpellWidget(prefs.size, spell, count, duration, expires)
+	spell:SetParent(self)
+	spell:SetPoint("CENTER")
+	self.spell = spell
+	widgets[id] = self
 end
 
-local function ScaleIn_OnFinished(anim)
-	anim.widget.Cooldown:Show()
-	anim.widget.Icon:SetAllPoints(anim.widget)
+function widgetProto:Release()
+	self:SetAnimation(nil)
+	self.spell:Release()
+	self.spell = nil
+	widgets[self.id] = nil
+	pool[self] = true
 end
 
-local function SpawnAnimation(widget)
-	local anim = widget:CreateAnimationGroup()
-	anim:SetIgnoreFramerateThrottle(true)
+local animations = {
+	["in"] = {
+		duration = 0.3,
+		Update = function(self, progress)
+			self.spell:SetScale(3-2*progress)
+		end,
+		Cleanup =  function(self)
+			self.spell:SetScale(1)
+		end,
+	},
+	["out"] = {
+		duration = 0.3,
+		Update = function(self, progress)
+			self.spell:SetAlpha(1-progress)
+		end,
+		Cleanup = function(self)
+			self.spell:SetAlpha(1)
+		end,
+		OnFinished = widgetProto.Release,
+	},
+}
 
-	local scaleIn = anim:CreateAnimation("Animation")
-	scaleIn.widget = widget
-	scaleIn:SetOrder(1)
-	scaleIn:SetDuration(0.3)
-	scaleIn:SetScript('OnPlay', ScaleIn_OnPlay)
-	scaleIn:SetScript('OnUpdate', ScaleIn_OnUpdate)
-	scaleIn:SetScript('OnFinished', ScaleIn_OnFinished)
-
-	return anim
-end
-
-function mod.OnWidgetReleased(widget)
-	if widget.animIn and widget.animIn:IsPlaying() then
-		widget.animIn:Stop()
+function widgetProto:OnUpdate(elapsed)
+	local anim = animations[self.animation]
+	self.timeLeft = self.timeLeft - elapsed
+	if self.timeLeft < 0 then
+		local OnFinished = anim.OnFinished
+		self:SetAnimation(nil)
+		if OnFinished then
+			OnFinished(self)
+		end
+	else
+		local progress = 1- (self.timeLeft / anim.duration)
+		anim.Update(self, progress)
 	end
-	widgets[widget.id] = nil
 end
 
-function mod:SpawnWidget(id, spell, count, duration, expires)
-	widget = self:AcquireSpellWidget(prefs.size, spell, count, duration, expires)
-	widget:SetParent(self.frame)
-	widget.OnCooldownEnd = widget.Release
-	widget.OnRelease = self.OnWidgetReleased
-	widget.id = id
-	widgets[id] = widget
-	return widget
-end
+function widgetProto:SetAnimation(animation)
+	if self.animation == animation then return end
 
+	local prev = animations[self.animation or false]
+	if prev then
+		prev.Cleanup(self)
+	end
+
+	self.animation = animation
+
+	local new = animations[animation or false]
+	if new then
+		self.timeLeft = new.duration
+		self:SetScript('OnUpdate', self.OnUpdate)
+		new.Update(self, 0)
+	else
+		self:SetScript('OnUpdate', nil)
+	end
+end
 
 local function ReuseOrSpawnWidget(spell, count, duration, expires, important)
 	local id = spell
 	local widget = widgets[id]
 	if widget then
-		mod:Debug(id, 'Update widget', spell, count, duration, expires)
-		widget:SetSpell(spell)
-		widget:SetTimeleft(duration, expires)
-		widget:SetCount(count)
+		widget.spell:SetSpell(spell)
+		widget.spell:SetTimeleft(duration, expires)
+		widget.spell:SetCount(count)
+		if widget.animation == "out" then
+			if important and prefs.animation then
+				widget:SetAnimation("in")
+			else
+				widget:SetAnimation(nil)
+			end
+		end
 	else
-		mod:Debug(id, 'New widget', spell, count, duration, expires)
-		widget = mod:SpawnWidget(id, spell, count, duration, expires)
+		widget = next(pool)
+		if widget then
+			pool[widget] = nil
+		else
+			widget = setmetatable(CreateFrame("Frame", nil, mod.frame), widgetMeta)
+		end
+		widget:OnAcquire(id, spell, count, duration, expires)
 		if important and prefs.animation then
-			if not widget.animIn then
-				mod:Debug('Spawning animation')
-				widget.animIn = SpawnAnimation(widget)
-			end
-			if not widget.animIn:IsPlaying() then
-				mod:Debug('Launching animation')
-				widget.animIn:Play()
-			end
+			widget:SetAnimation("in")
 		end
 	end
 	widget.gen = gen
 end
+
+--------------------------------------------------------------------------------
+-- Options
+--------------------------------------------------------------------------------
 
 function mod:Update(event, unit)
 	if not watchers[unit] then return end
@@ -338,7 +389,7 @@ function mod:Update(event, unit)
 	end
 	for spell, widget in pairs(widgets) do
 		if widget.gen ~= gen then
-			widget:Release()
+			widget:SetAnimation("out")
 		end
 	end
 
