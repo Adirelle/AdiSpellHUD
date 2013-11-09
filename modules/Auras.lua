@@ -327,7 +327,7 @@ function widgetProto:OnUpdate(elapsed)
 			OnFinished(self)
 		end
 	else
-		local progress = 1- (self.timeLeft / anim.duration)
+		local progress = math.sqrt(1 - (self.timeLeft / anim.duration))
 		anim.Update(self, progress)
 	end
 end
