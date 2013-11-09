@@ -287,7 +287,7 @@ function widgetProto:Release()
 end
 
 local animations = {
-	["in"] = {
+	["importantIn"] = {
 		duration = 0.3,
 		Update = function(self, progress)
 			self.spell:SetScale(3-2*progress)
@@ -296,8 +296,17 @@ local animations = {
 			self.spell:SetScale(1)
 		end,
 	},
-	["out"] = {
+	["in"] = {
 		duration = 0.3,
+		Update = function(self, progress)
+			self.spell:SetAlpha(progress)
+		end,
+		Cleanup =  function(self)
+			self.spell:SetAlpha(1)
+		end,
+	},
+	["out"] = {
+		duration = 0.5,
 		Update = function(self, progress)
 			self.spell:SetAlpha(1-progress)
 		end,
@@ -346,16 +355,13 @@ end
 local function ReuseOrSpawnWidget(spell, count, duration, expires, important)
 	local id = spell
 	local widget = widgets[id]
+	local animIn = important and prefs.animation and "importantIn" or "in"
 	if widget then
 		widget.spell:SetSpell(spell)
 		widget.spell:SetTimeleft(duration, expires)
 		widget.spell:SetCount(count)
 		if widget.animation == "out" then
-			if important and prefs.animation then
-				widget:SetAnimation("in")
-			else
-				widget:SetAnimation(nil)
-			end
+			widget:SetAnimation(animIn)
 		end
 	else
 		widget = next(pool)
@@ -365,9 +371,7 @@ local function ReuseOrSpawnWidget(spell, count, duration, expires, important)
 			widget = setmetatable(CreateFrame("Frame", nil, mod.frame), widgetMeta)
 		end
 		widget:OnAcquire(id, spell, count, duration, expires)
-		if important and prefs.animation then
-			widget:SetAnimation("in")
-		end
+		widget:SetAnimation(animIn)
 	end
 	widget.gen = gen
 end
