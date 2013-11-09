@@ -321,10 +321,9 @@ function widgetProto:OnUpdate(elapsed)
 	local anim = animations[self.animation]
 	self.timeLeft = self.timeLeft - elapsed
 	if self.timeLeft < 0 then
-		local OnFinished = anim.OnFinished
-		self:SetAnimation(nil)
-		if OnFinished then
-			OnFinished(self)
+		local prev = self:SetAnimation(nil)
+		if prev and prev.OnFinished then
+			prev.OnFinished(self)
 		end
 	else
 		local progress = math.sqrt(1 - (self.timeLeft / anim.duration))
@@ -333,6 +332,7 @@ function widgetProto:OnUpdate(elapsed)
 end
 
 function widgetProto:SetAnimation(animation)
+	if not prefs.animation then animation = nil end
 	if self.animation == animation then return end
 
 	local prev = animations[self.animation or false]
@@ -350,12 +350,14 @@ function widgetProto:SetAnimation(animation)
 	else
 		self:SetScript('OnUpdate', nil)
 	end
+
+	return prev
 end
 
 local function ReuseOrSpawnWidget(spell, count, duration, expires, important)
 	local id = spell
 	local widget = widgets[id]
-	local animIn = important and prefs.animation and "importantIn" or "in"
+	local animIn = important and "importantIn" or "in"
 	if widget then
 		widget.spell:SetSpell(spell)
 		widget.spell:SetTimeleft(duration, expires)
@@ -535,7 +537,7 @@ function mod:GetOptions()
 			},
 			animation = {
 				name = L['Animation'],
-				desc = L['Play an animation for important buffs (trinket/enchant procs and encounter spells).'],
+				desc = L['Animate the icons when the aura appears/disappears.'],
 				type = 'toggle',
 				order = 60,
 			},
