@@ -104,6 +104,7 @@ function lib:Create()
 	local cooldown = CreateFrame("Cooldown", nil, widget)
 	cooldown:SetAllPoints()
 	cooldown:SetFrameLevel(widget:GetFrameLevel()+1)
+	cooldown:SetReverse(true)
 	cooldown.widget = widget
 	cooldown:SetScript('OnUpdate', lib.Cooldown_OnUpdate)
 	widget.Cooldown = cooldown
