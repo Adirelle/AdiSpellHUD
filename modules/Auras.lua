@@ -150,8 +150,8 @@ GetWatchers = function()
 		for index = 1, 128 do
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, index)
 			if name then
-				if LibItemBuffs:IsItemBuff(spell) then
-					callback(spell, count, duration, expirationTime, true)
+				if duration and duration > 0 and duration < 120 and LibItemBuffs:IsItemBuff(spell) then
+					callback(spell, count, duration, expirationTime, duration <= 30)
 				end
 			else
 				return
