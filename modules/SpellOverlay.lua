@@ -42,7 +42,7 @@ local DEFAULT_SETTINGS = {
 function mod:OnInitialize()
 	local t = DEFAULT_SETTINGS.profile.anchor
 	t.scale, t.pointFrom, t.refFrame, t.pointTo, t.xOffset, t.yOffset = frame:GetScale(), frame:GetPoint()
-	
+
 	self.db = addon.db:RegisterNamespace(self.name, DEFAULT_SETTINGS)
 
 	self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L["Blizzard Spell Overlay"], function(target)
@@ -53,7 +53,7 @@ function mod:OnInitialize()
 	end)
 	self:SetMovable(frame, false)
 	frame:SetClampedToScreen(true)
-	
+
 	self.throttle = 0
 	self.num = 0
 end
@@ -61,7 +61,7 @@ end
 function mod:OnEnable()
 	self:RawHook('SpellActivationOverlay_CreateOverlay', true)
 	self:RegisterEvent('UNIT_AURA')
-	
+
 	self:UpdateOverlaysInUse()
 end
 
@@ -121,7 +121,7 @@ function mod:SpellActivationOverlay_CreateOverlay(parent)
 	text:SetJustifyV("MIDDLE")
 	text:Hide()
 	overlay.text = text
-	
+
 	overlay.pulse = fakePulse
 	overlay.animIn = { overlay = overlay, Play = mod.AnimIn_Play }
 	overlay.animOut = { overlay = overlay, Play = mod.AnimOut_Play, Stop = NOOP }
@@ -183,7 +183,7 @@ function mod.OnUpdate(_, elapsed)
 	if not next(frame.overlaysInUse) then
 		frame:SetScript('OnUpdate', nil)
 	else
-		for spell, overlays in pairs(frame.overlaysInUse) do	
+		for spell, overlays in pairs(frame.overlaysInUse) do
 			for _, overlay in pairs(overlays) do
 				mod.Overlay_OnUpdate(overlay, elapsed)
 			end
@@ -194,18 +194,18 @@ end
 function mod.Overlay_OnUpdate(overlay, time)
 	time = time + overlay.time
 	overlay.time = time
-	
+
 	local alpha, scale = 1, 1
 	if overlay.phase == 1 then
 		alpha = min(time / 0.3, 1)
 		if alpha < 1 then
-			scale = 0.5 + 0.5 * alpha 
+			scale = 0.5 + 0.5 * alpha
 		else
 			overlay.phase = 2
 		end
 	elseif overlay.phase == 2 then
 		scale = 1 + 0.05 * sin(time * 2 * pi)
-	elseif overlay.phase == 3 then		
+	elseif overlay.phase == 3 then
 		alpha = max(1 - time / 0.3, 0)
 		if alpha > 0 then
 			scale = 2 - alpha
@@ -217,7 +217,7 @@ function mod.Overlay_OnUpdate(overlay, time)
 	overlay:SetAlpha(alpha)
 	local w, h = overlay:GetSize()
 	overlay.texture:SetSize(scale * w, scale * h)
-	
+
 	local text = overlay.text
 	if text:IsVisible() then
 		local timeleft = overlay.expires - GetTime()
@@ -242,9 +242,9 @@ function mod.Overlay_OnShow(overlay)
 end
 
 function mod.Overlay_OnHide(overlay)
-	mod:Debug('Overlay_OnHide', overlay)	
+	mod:Debug('Overlay_OnHide', overlay)
 	tDeleteItem(frame.overlaysInUse[overlay.spellID], overlay)
-	tinsert(frame.unusedOverlays, overlay);	
+	tinsert(frame.unusedOverlays, overlay);
 end
 
 function mod.AnimIn_Play(anim)
