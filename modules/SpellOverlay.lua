@@ -124,7 +124,7 @@ function mod:SpellActivationOverlay_CreateOverlay(parent)
 
 	overlay.pulse = fakePulse
 	overlay.animIn = { overlay = overlay, Play = mod.AnimIn_Play }
-	overlay.animOut = { overlay = overlay, Play = mod.AnimOut_Play, Stop = NOOP }
+	overlay.animOut = { overlay = overlay, Play = mod.AnimOut_Play, Stop = mod.AnimOut_Stop }
 
 	return overlay
 end
@@ -259,6 +259,15 @@ function mod.AnimOut_Play(anim)
 	local overlay = anim.overlay
 	overlay.text:Hide()
 	overlay.phase = 3
+	overlay.time = 0
+end
+
+function mod.AnimOut_Stop(anim)
+	local overlay = anim.overlay
+	if overlay.phase ~= 3 then return end
+	mod:Debug('AnimOut_Stop', anim)
+	overlay.text:Show()
+	overlay.phase = 2
 	overlay.time = 0
 end
 
