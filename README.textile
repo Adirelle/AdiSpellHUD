@@ -17,14 +17,18 @@ Supported classes and specializations:
 ** Beast Mastery (5.4.1)
 ** Marksmanship (5.4.1)
 ** Survival (5.4.1)
-* Warlock
-** Demonology (5.4)
-** Destruction (5.4)
 * Monk
 ** Brewmaster (5.4.1)
 ** Windwalker (5.4.1)
+* Priest
+** Discipline (5.4.1)
+** Holy (5.4.1)
+** Shadow (5.4.1)
 * Shaman
 ** ?
+* Warlock
+** Demonology (5.4)
+** Destruction (5.4)
 
 h2. Modules
 
