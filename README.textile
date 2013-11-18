@@ -8,6 +8,24 @@ h2. Class and spell support
 
 The spells supported by the cooldown and aura modules are hard-coded. To keep them simple, I am not planning to add a configuration UI. However, contributions are welcome. I accept pull requests on github.com as long as you respect these four rules: indent with tabs, align with spaces, remove trailing spaces and comment in english.
 
+Supported classes and specializations:
+* Druid
+** Balance (5.4.1)
+** Feral (5.4.1)
+** Restoration (5.4.1)
+* Hunter
+** Beast Mastery (5.4.1)
+** Marksmanship (5.4.1)
+** Survival (5.4.1)
+* Warlock
+** Demonology (5.4)
+** Destruction (5.4)
+* Monk
+** Brewmaster (5.4.1)
+** Windwalker (5.4.1)
+* Shaman
+** ?
+
 h2. Modules
 
 AdiSpellHUD is composed of three modules, that can be enabled/disabled separately.
