@@ -496,6 +496,7 @@ COOLDOWNS = {
 		[ 22842] = true, -- Frenzied Regeneration
 		[ 88751] = true, -- Wild Mushroom: Detonate
 		[124974] = true, -- Nature's Vigil
+		[  2782] = true, -- Remove Corruption
 		-- Balance
 		[ 48505] = true, -- Starfall
 		[ 78675] = true, -- Solar Beam
@@ -513,6 +514,8 @@ COOLDOWNS = {
 		[ 18562] = true, -- Swiftmend
 		[ 17116] = true, -- Nature's Swiftness
 		[ 48438] = true, -- Wild Growth
+		[ 88423] = true, -- Nature's Cure
+		[122288] = true, -- Symbiosis: Cleanse
 	},
 	HUNTER = {
 		[   781] = true, -- Disengage
@@ -592,13 +595,17 @@ COOLDOWNS = {
 		[115295] = true, -- Guard
 		[121253] = true, -- Keg Smash
 		-- Mistweaver
+		[115450] = true, -- Detox
+		[115451] = true, -- Internal Medicine
 		-- Windwalker
 		[113656] = true, -- Fists of Fury
 	},
 	PRIEST = {
+		[   527] = true, -- Purify
 		[  8122] = true, -- Psychic Scream
 		[ 10060] = true, -- Power Infusion
 		[ 19236] = true, -- Desperate Prayer
+		[ 32375] = true, -- Mass Dispel
 		[ 34433] = true, -- Shadowfiend
 		[ 64843] = true, -- Divine Hymn
 		[ 64901] = true, -- Hymn of Hope
@@ -620,6 +627,8 @@ COOLDOWNS = {
 		[142723] = true, -- Void Shift
 	},
 	SHAMAN = {
+		[ 77130] = true, -- Purify Spirit
+		[ 51886] = true, -- Cleanse Spirit
 		-- See https://github.com/Adirelle/AdiSpellHUD/issues/1
 		[  2062] = true, -- Earth Elemental
 		[  2894] = true, -- Fire Elemental
