@@ -93,50 +93,35 @@ end
 -- Testing enable state
 --------------------------------------------------------------------------------
 
-local function MergeSpells(dst, src)
-	if src then
-		for spellID, cond in pairs(src) do
-			if not cond then
-				dst[spellID] = nil
-				mod:Debug('Do not watch for', GetSpellInfo(spellID))
-			elseif Spellbook:IsKnown(spellID) then
-				mod:Debug('Watch for', (GetSpellInfo(spellID)))
-				dst[spellID] = true
-			end
+local function MergeSpells(spells, key)
+	if not COOLDOWNS[key] then
+		return mod:Debug('Empty spell list', key)
+	end
+	for spellID, cond in pairs(COOLDOWNS[key]) do
+		local name = GetSpellLink(spellID)
+		if not cond then
+			mod:Debug('Not watching for', name)
+			spells[spellID] = nil
+		elseif Spellbook:IsKnown(spellID) then
+			mod:Debug('Watching for', name)
+			spells[spellID] = true
+		else
+			mod:Debug('Unknown spell', name)
 		end
 	end
 end
 
+local _, playerClass = UnitClass("player")
 function mod:UpdateEnabledState(event)
 	self:Debug('UpdateEnabledState', event)
-	local primaryTree = (UnitLevel("player") < 10) and true or GetSpecialization()
-	if not primaryTree then
-		if event == "OnInitialize" then
-			self.RegisterEvent(self.name, "PLAYER_ALIVE", function(event)
-				if GetSpecialization() then
-					self.UnregisterEvent(self.name, "PLAYER_ALIVE")
-				 	return self:UpdateEnabledState(event)
-				end
-			end)
-		end
-		return
-	end
-	local _, class = UnitClass("player")
-	self:Debug('CheckActivation:', class, primaryTree)
-
 	local cooldownsToWatch = self.cooldownsToWatch
 	local spells = wipe(cooldownsToWatch.spells or {})
 	local items = wipe(cooldownsToWatch.items or {})
 	local petSpells = wipe(self.petSpells)
 
 	if addon.db.profile.modules[self.name] then
-		MergeSpells(spells, COOLDOWNS.COMMON)
-		if COOLDOWNS[class] then
-			MergeSpells(spells, COOLDOWNS[class]['*'])
-			if primaryTree ~= true then
-				MergeSpells(spells, COOLDOWNS[class][primaryTree])
-			end
-		end
+		MergeSpells(spells, 'COMMON')
+		MergeSpells(spells, playerClass)
 		for id, name in Spellbook:IterateSpells(BOOKTYPE_PET) do
 			self:Debug("pet spell:", id, name)
 			if not IsPassiveSpell(id) then
@@ -497,155 +482,117 @@ COOLDOWNS = {
 		[107079] = true, -- Quaking Palm
 	},
 	DRUID = {
-		['*'] = {
-			[29166] = true, -- Innervate
-			[22812] = true, -- Barkskin
-			[20484] = true, -- Rebirth
-			[  740] = true, -- Tranquility
-			[  467] = true, -- Thorns
-			[ 1850] = true, -- Dash
-			--[80964] = true, -- Skull Bash (bear)
-			[80965] = true, -- Skull Bash (cat)
-			--[77761] = true, -- Stampeding Roar (bear)
-			[77764] = true, -- Stampeding Roar (cat)
-			[22842] = true, -- Frenzied Regeneration
-			[88751] = true, -- Wild Mushroom: Detonate
-		},
+		[ 29166] = true, -- Innervate
+		[ 22812] = true, -- Barkskin
+		[ 20484] = true, -- Rebirth
+		[   740] = true, -- Tranquility
+		[   467] = true, -- Thorns
+		[  1850] = true, -- Dash
+		[ 88751] = true, -- Wild Mushroom: Detonate
 		-- Balance
-		[1] = {
-			[48505] = true, -- Starfall
-			[78675] = true, -- Solar Beam
-			[78674] = true, -- Starsurge
-			[33831] = true, -- Force of Nature
-			[50516] = true, -- Typhoon
-		},
+		[ 48505] = true, -- Starfall
+		[ 78675] = true, -- Solar Beam
+		[ 78674] = true, -- Starsurge
+		[ 33831] = true, -- Force of Nature
+		[ 50516] = true, -- Typhoon
 		-- Feral
-		[2] = {
-			[61336] = true, -- Survival Instincts
-		},
+		[  5217] = true, -- Tiger's Fury
 		-- Restoration
-		[3] = {
-			[33891] = true, -- Tree of Life
-			[18562] = true, -- Swiftmend
-			[17116] = true, -- Nature's Swiftness
-			[48438] = true, -- Wild Growth
-		},
+		[ 33891] = true, -- Incarnation: Tree of Life
+		[ 18562] = true, -- Swiftmend
+		[ 17116] = true, -- Nature's Swiftness
+		[ 48438] = true, -- Wild Growth
 	},
 	HUNTER = {
-		['*'] = {
-			[   781] = true, -- Disengage
-			[  1499] = true, -- Freezing Trap
-			[  3045] = true, -- Rapid Fire
-			[  5384] = true, -- Feign Death
-			[ 13813] = true, -- Explosive Trap
-			[ 19263] = true, -- Deterrence
-			[ 19386] = true, -- Wyvern Sting
-			[ 19503] = true, -- Scatter Shot
-			[ 19577] = true, -- Intimidation
-			[ 20736] = true, -- Distracting Shot
-			[ 34477] = true, -- Misdirection
-			[ 51753] = true, -- Camouflage
-			[ 53271] = true, -- Master's Call
-			[ 82726] = true, -- Fervor
-			[109248] = true, -- Binding Shot
-			[109259] = true, -- Powershot
-			[109304] = true, -- Exhilaration
-			[117050] = true, -- Glaive Toss
-			[120360] = true, -- Barrage
-			[120679] = true, -- Dire Beast
-			[120697] = true, -- Lynx Rush
-			[121818] = true, -- Stampede
-			[131894] = true, -- A Murder of Crows
-			[147362] = true, -- Counter Shot
-		},
+		[   781] = true, -- Disengage
+		[  1499] = true, -- Freezing Trap
+		[  3045] = true, -- Rapid Fire
+		[  5384] = true, -- Feign Death
+		[ 13813] = true, -- Explosive Trap
+		[ 19263] = true, -- Deterrence
+		[ 19386] = true, -- Wyvern Sting
+		[ 19503] = true, -- Scatter Shot
+		[ 19577] = true, -- Intimidation
+		[ 20736] = true, -- Distracting Shot
+		[ 34477] = true, -- Misdirection
+		[ 51753] = true, -- Camouflage
+		[ 53271] = true, -- Master's Call
+		[ 82726] = true, -- Fervor
+		[109248] = true, -- Binding Shot
+		[109259] = true, -- Powershot
+		[109304] = true, -- Exhilaration
+		[117050] = true, -- Glaive Toss
+		[120360] = true, -- Barrage
+		[120679] = true, -- Dire Beast
+		[120697] = true, -- Lynx Rush
+		[121818] = true, -- Stampede
+		[131894] = true, -- A Murder of Crows
+		[147362] = true, -- Counter Shot
 		-- Beast mastery
-		[1] = {
-			[19574] = true, -- Bestial Wrath
-		},
+		[ 19574] = true, -- Bestial Wrath
 		-- Marksmanship
-		[2] = {
-			[34490] = true, -- Silencing Shot
-		},
+		[ 34490] = true, -- Silencing Shot
 		-- Survival
-		[3] = {
-			[ 3674] = true, -- Black Arrow
-		},
+		[  3674] = true, -- Black Arrow
 	},
 	WARLOCK = {
-		['*'] = {
-			[   755] = true, -- Glyphed Health Funnel
-			[  1122] = true, -- Summon Infernal
-			[  5484] = true, -- Howl of Terror
-			[  6229] = true, -- Twilight Ward
-			[  6789] = true, -- Mortal Coil
-			[ 18540] = true, -- Summon Doomguard
-			[ 20707] = true, -- Soulstone
-			[ 29858] = true, -- Soulshatter
-			[ 30283] = true, -- Shadowfury
-			[ 47897] = true, -- Demonic Breath
-			[ 48020] = true, -- Demonic Circle: Teleport
-			[104773] = true, -- Unending Resolve
-			[108359] = true, -- Dark Regeneration
-			[108416] = true, -- Sacrificial Pact
-			[108482] = true, -- Unbound Will
-			[108501] = true, -- Grimore of Service
-			[110913] = true, -- Dark Bargain
-			[111397] = true, -- Blood Horror
-			[132411] = true, -- Singe Magic (sacrified Imp)
-		},
+		[   755] = true, -- Glyphed Health Funnel
+		[  1122] = true, -- Summon Infernal
+		[  5484] = true, -- Howl of Terror
+		[  6229] = true, -- Twilight Ward
+		[  6789] = true, -- Mortal Coil
+		[ 18540] = true, -- Summon Doomguard
+		[ 20707] = true, -- Soulstone
+		[ 29858] = true, -- Soulshatter
+		[ 30283] = true, -- Shadowfury
+		[ 47897] = true, -- Demonic Breath
+		[ 48020] = true, -- Demonic Circle: Teleport
+		[104773] = true, -- Unending Resolve
+		[108359] = true, -- Dark Regeneration
+		[108416] = true, -- Sacrificial Pact
+		[108482] = true, -- Unbound Will
+		[108501] = true, -- Grimore of Service
+		[110913] = true, -- Dark Bargain
+		[111397] = true, -- Blood Horror
+		[132411] = true, -- Singe Magic (sacrified Imp)
 		-- Affliction
-		[1] = {
-		},
 		-- Demonology
-		[2] = {
-			[119839] = true, -- Fury Ward (Dark Apotheosis)
-			[116198] = true, -- Aura of Enfeeblement (Metamorphosis/Dark Apotheosis)
-			[104025] = true, -- Immolation Aura (Metamorphosis/Dark Apotheosis)
-			[132413] = true, -- Shadow Bulwark (Grimoire of Sacrifice)
-			[113861] = true, -- Dark Soul: Knowledge
-			[114175] = true, -- Demonic Slash (Dark Apotheosis)
-			[105174] = true, -- Hand of Gul'dan
-		},
+		[119839] = true, -- Fury Ward (Dark Apotheosis)
+		[116198] = true, -- Aura of Enfeeblement (Metamorphosis/Dark Apotheosis)
+		[104025] = true, -- Immolation Aura (Metamorphosis/Dark Apotheosis)
+		[132413] = true, -- Shadow Bulwark (Grimoire of Sacrifice)
+		[113861] = true, -- Dark Soul: Knowledge
+		[114175] = true, -- Demonic Slash (Dark Apotheosis)
+		[105174] = true, -- Hand of Gul'dan
 		-- Destruction
-		[3] = {
-			[ 17962] = true, -- Conflagrate
-			[ 80240] = true, -- Havoc
-			[113858] = true, -- Dark Soul: Instability
-			[120451] = true, -- Flames of Xororth
-		},
+		[ 17962] = true, -- Conflagrate
+		[ 80240] = true, -- Havoc
+		[113858] = true, -- Dark Soul: Instability
+		[120451] = true, -- Flames of Xororth
 	},
 	MONK = {
-		['*'] = {
-			[109132] = true, -- Roll
-			[115072] = true, -- Expel Harm
-			[121827] = true, -- Roll modified by Celerity
-		},
+		[109132] = true, -- Roll
+		[115072] = true, -- Expel Harm
+		[121827] = true, -- Roll modified by Celerity
 		-- Brewmaster
-		[1] = {
-			[115176] = true, -- Zen Meditation
-			[115203] = true, -- Fortifying Brew
-			[115213] = true, -- Avert Harm
-			[115295] = true, -- Guard
-			[121253] = true, -- Keg Smash
-		},
+		[115176] = true, -- Zen Meditation
+		[115203] = true, -- Fortifying Brew
+		[115213] = true, -- Avert Harm
+		[115295] = true, -- Guard
+		[121253] = true, -- Keg Smash
 		-- Mistweaver
-		[2] = {},
 		-- Windwalker
-		[3] = {
-			[113656] = true, -- Fists of Fury
-		},
+		[113656] = true, -- Fists of Fury
 	},
 	SHAMAN = {
-		['*'] = {
-			-- See https://github.com/Adirelle/AdiSpellHUD/issues/1
-			[  2062] = true, -- Earth Elemental
-			[  2894] = true, -- Fire Elemental
-			[ 30823] = true, -- Shamanistic Rage
-			[ 51490] = true, -- Thunderstorm
-			[ 79206] = true, -- Spiritwalker's Grace
-			[108270] = true, -- Stone Bullwark Totem
-			[108281] = true, -- Ancestral Guidance
-			[114049] = true, -- Ascendence
-		}
+		-- See https://github.com/Adirelle/AdiSpellHUD/issues/1
+		[  2062] = true, -- Earth Elemental
+		[  2894] = true, -- Fire Elemental
+		[ 30823] = true, -- Shamanistic Rage
+		[ 51490] = true, -- Thunderstorm
+		[ 79206] = true, -- Spiritwalker's Grace
+		[108270] = true, -- Stone Bullwark Totem
+		[108281] = true, -- Ancestral Guidance
+		[114049] = true, -- Ascendence
 	},
 }
