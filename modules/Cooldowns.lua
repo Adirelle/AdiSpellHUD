@@ -50,7 +50,7 @@ local MODELS = {
 				return name, texture
 			end
 		end,
-		GetCooldown = GetSpellCooldown, 
+		GetCooldown = GetSpellCooldown,
 		GetTexture = function(id) return select(3, GetSpellInfo(id)) end,
 		IsMuted = GetSpellAutocast,
 	},
@@ -78,7 +78,7 @@ function mod:OnInitialize()
 	self.runningCooldowns = {}
 	self.cooldownsToWatch = {}
 	self.petSpells = {}
-	
+
 	self.RegisterEvent(self.name, "ACTIVE_TALENT_GROUP_CHANGED", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "PLAYER_TALENT_UPDATE", self.UpdateEnabledState, self)
 	self.RegisterEvent(self.name, "UNIT_INVENTORY_CHANGED", self.UNIT_INVENTORY_CHANGED, self)
@@ -140,7 +140,7 @@ function mod:UpdateEnabledState(event)
 	end
 	cooldownsToWatch.spells = next(spells) and spells
 	cooldownsToWatch.items = next(items) and items
-		
+
 	local enable = (cooldownsToWatch.spells or cooldownsToWatch.items) ~= nil
 	if event == "OnInitialize" then
 		self:SetEnabledState(enable)
@@ -185,17 +185,17 @@ function mod:OnEnable()
 		self.delay = 0
 		self.timer = timer
 	end
-	
+
 	if not self.frame then
 		local frame = CreateFrame("Frame", nil, UIParent)
 		frame:SetPoint("CENTER")
 		frame:SetSize(prefs.size, prefs.size)
 		frame:SetAlpha(prefs.alpha)
 		frame:SetClampedToScreen(true)
-		self.frame = frame		
+		self.frame = frame
 		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Cooldown Icon"])
 	end
-	
+
 	self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 	self:Debug('Enabled')
 	self:Update(true)
@@ -289,14 +289,14 @@ function mod:CreateOverlay()
 	overlay:SetAllPoints(self.frame)
 	overlay:SetAlpha(0)
 	overlay:Hide()
-	
+
 	overlay:SetScript('OnShow', Overlay_OnShow)
 
 	local texture = overlay:CreateTexture(nil, "OVERLAY")
 	texture:SetAllPoints(overlay)
 	texture:SetTexCoord(5/64, 59/64, 5/64, 59/64)
 	overlay.texture = texture
-	
+
 	local animation = overlay:CreateAnimationGroup()
 	animation:SetIgnoreFramerateThrottle(true)
 	animation:SetScript('OnFinished', Animation_OnFinished)
@@ -307,13 +307,13 @@ function mod:CreateOverlay()
 	fadeIn:SetDuration(0.5)
 	fadeIn:SetChange(1)
 	fadeIn:SetSmoothing("OUT")
-	
+
 	local scale = animation:CreateAnimation("Scale")
 	scale:SetOrder(1)
 	scale:SetDuration(1)
 	scale:SetScale(4, 4)
 	scale:SetSmoothing("IN_OUT")
-	
+
 	local fadeOut = animation:CreateAnimation("Alpha")
 	fadeOut:SetOrder(1)
 	fadeOut:SetDuration(0.5)
