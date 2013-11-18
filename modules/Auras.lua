@@ -66,6 +66,7 @@ GetWatchers = function()
 			[106922] = OwnAuraGetter(106922), -- Might of Ursoc
 			[114107] = OwnAuraGetter(114107), -- Soul of the Forest
 			[124974] = OwnAuraGetter(124974), -- Nature's Vigil
+			[108373] = OwnAuraGetter(145152), -- Dream of Cenarius (feral)
 		}
 	elseif class == 'WARLOCK' then
 		aurasToWatch.player = {
