@@ -595,6 +595,30 @@ COOLDOWNS = {
 		-- Windwalker
 		[113656] = true, -- Fists of Fury
 	},
+	PRIEST = {
+		[  8122] = true, -- Psychic Scream
+		[ 10060] = true, -- Power Infusion
+		[ 19236] = true, -- Desperate Prayer
+		[ 34433] = true, -- Shadowfiend
+		[ 64843] = true, -- Divine Hymn
+		[ 64901] = true, -- Hymn of Hope
+		[ 73325] = true, -- Leap of Faith
+		[ 89485] = true, -- Inner Focus
+		[108920] = true, -- Void Tendrils
+		[108921] = true, -- Psyfiend
+		[108968] = true, -- Void Shift
+		-- Discipline
+		[ 33206] = true, -- Pain Suppression
+		[ 62618] = true, -- Power Word: Barrier
+		[109964] = true, -- Spirit Shell
+		-- Holy
+		[ 47788] = true, -- Guardian Spirit
+		[126135] = true, -- Lightwell
+		-- Shadow
+		[ 15286] = true, -- Vampiric Embrace
+		[ 47585] = true, -- Dispersion
+		[142723] = true, -- Void Shift
+	},
 	SHAMAN = {
 		-- See https://github.com/Adirelle/AdiSpellHUD/issues/1
 		[  2062] = true, -- Earth Elemental

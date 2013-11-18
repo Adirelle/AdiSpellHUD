@@ -102,6 +102,13 @@ GetWatchers = function()
 				end
 			end,
 		}
+	elseif class == 'PRIEST' then
+		aurasToWatch.player = {
+			[109142] = OwnAuraGetter(123254), -- Twist of Fate
+			[ 52798] = OwnAuraGetter( 52798), -- Borrowed Time
+			[109964] = OwnAuraGetter(109964), -- Spirit Shell
+			[ 81700] = OwnAuraGetter( 81700), -- Archangel
+		}
 	else
 		aurasToWatch.player = {}
 	end
