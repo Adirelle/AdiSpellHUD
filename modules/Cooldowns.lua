@@ -488,7 +488,14 @@ COOLDOWNS = {
 		[   740] = true, -- Tranquility
 		[   467] = true, -- Thorns
 		[  1850] = true, -- Dash
+		[ 80964] = true, -- Skull Bash (bear)
+		[ 80965] = true, -- Skull Bash (cat)
+		[ 77761] = true, -- Stampeding Roar (bear)
+		[ 77764] = true, -- Stampeding Roar (cat)
+		[106898] = true, -- Stampeding Roar (human)
+		[ 22842] = true, -- Frenzied Regeneration
 		[ 88751] = true, -- Wild Mushroom: Detonate
+		[124974] = true, -- Nature's Vigil
 		-- Balance
 		[ 48505] = true, -- Starfall
 		[ 78675] = true, -- Solar Beam
@@ -497,6 +504,10 @@ COOLDOWNS = {
 		[ 50516] = true, -- Typhoon
 		-- Feral
 		[  5217] = true, -- Tiger's Fury
+		[ 61336] = true, -- Survival Instincts
+		[106951] = true, -- Berserk
+		[102543] = true, -- Incarnation: King of the Jungle
+		-- Guardian
 		-- Restoration
 		[ 33891] = true, -- Incarnation: Tree of Life
 		[ 18562] = true, -- Swiftmend
