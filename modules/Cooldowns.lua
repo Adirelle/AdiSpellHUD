@@ -587,18 +587,27 @@ COOLDOWNS = {
 	MONK = {
 		[109132] = true, -- Roll
 		[115072] = true, -- Expel Harm
+		[115098] = true, -- Chi Wave
+		[116705] = true, -- Spear Hand Strike
 		[121827] = true, -- Roll modified by Celerity
 		-- Brewmaster
 		[115176] = true, -- Zen Meditation
 		[115203] = true, -- Fortifying Brew
 		[115213] = true, -- Avert Harm
 		[115295] = true, -- Guard
+		[115315] = true, -- Summon Black Ox Statue
 		[121253] = true, -- Keg Smash
 		-- Mistweaver
+		[115151] = true, -- Renewing Mist
+		[115310] = true, -- Revival
+		[115313] = true, -- Summon Jade Serpent Statue
 		[115450] = true, -- Detox
 		[115451] = true, -- Internal Medicine
+		[116680] = true, -- Thunder Focus Tea
+		[116849] = true, -- Life Cocoon
 		-- Windwalker
 		[113656] = true, -- Fists of Fury
+		[122470] = true, -- Touch of Karma
 	},
 	PRIEST = {
 		[   527] = true, -- Purify
