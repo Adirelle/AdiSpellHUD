@@ -99,7 +99,7 @@ overlayProto.Debug = addon.Debug
 
 local serial = 0
 function mod:SpellActivationOverlay_CreateOverlay(parent)
-	local overlay = setmetatable(CreateFrame("Frame", self.name.."SpellOverlay"..i, parent), overlayMeta)
+	local overlay = setmetatable(CreateFrame("Frame", self.name.."SpellOverlay"..serial, parent), overlayMeta)
 	serial = serial + 1
 	overlay:Initialize()
 	return overlay
