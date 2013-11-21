@@ -124,7 +124,7 @@ function mod:BuildRules()
 	end
 
 	-- Spells according to LibPlayerSpells
-	for buff, flags, provider in LibPlayerSpells:IterateSpells('SURVIVAL BURST MANA_REGEN POWER_REGEN', class..' PERSONAL AURA') do
+	for buff, flags, provider in LibPlayerSpells:IterateSpells('IMPORTANT SURVIVAL BURST MANA_REGEN POWER_REGEN', class..' PERSONAL AURA') do
 		--@debug@
 		self:Debug('LibPlayerSpells', GetSpellLink(provider), '=>', (GetSpellLink(buff)))
 		--@end-debug@
@@ -195,7 +195,8 @@ local DEFAULT_SETTINGS = {
 		size = 32,
 		spacing = 4,
 		animation = true,
-		anchor = { }
+		anchor = { },
+		ignoreOverlayed = true,
 	},
 	class = {
 		spells = { ['*'] = true },
@@ -386,6 +387,9 @@ function widgetProto:SetAnimation(animation)
 end
 
 local function ReuseOrSpawnWidget(spell, count, duration, expires, important)
+	if IsSpellOverlayed(spell) and prefs.ignoreOverlayed then
+		return
+	end
 	local id = spell
 	local widget = widgets[id]
 	local animIn = important and "importantIn" or "in"
@@ -495,6 +499,13 @@ function mod:UpdateSpells(event)
 	else
 		self:UnregisterEvent('UNIT_PET')
 	end
+	if prefs.ignoreOverlayed then
+		self:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_SHOW', 'UpdateAll')
+		self:RegisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE', 'UpdateAll')
+	else
+		self:UnregisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_SHOW')
+		self:UnregisterEvent('SPELL_ACTIVATION_OVERLAY_GLOW_HIDE')
+	end
 
 	self:UpdateAll(event)
 end
@@ -533,6 +544,12 @@ function mod:GetOptions()
 					self:UpdateSpells('OnConfigChanged')
 				end,
 				order = 10,
+			},
+			ignoreOverlayed = {
+				name = L['Ignore flashing spells'],
+				desc = L['Do not show spells that are otherwise flashing by Blizzard UI.'],
+				type = 'toggle',
+				order = 15,
 			},
 			size = {
 				name = L['Size'],
