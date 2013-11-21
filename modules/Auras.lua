@@ -124,7 +124,7 @@ function mod:BuildRules()
 	end
 
 	-- Spells according to LibPlayerSpells
-	for buff, flags, provider in LibPlayerSpells:IterateSpells('SURVIVAL BURST', class..' PERSONAL AURA') do
+	for buff, flags, provider in LibPlayerSpells:IterateSpells('SURVIVAL BURST MANA_REGEN POWER_REGEN', class..' PERSONAL AURA') do
 		--@debug@
 		self:Debug('LibPlayerSpells', GetSpellLink(provider), '=>', (GetSpellLink(buff)))
 		--@end-debug@
