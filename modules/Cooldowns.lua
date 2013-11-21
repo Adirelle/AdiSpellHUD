@@ -22,6 +22,7 @@ along with AdiSpellHUD.  If not, see <http://www.gnu.org/licenses/>.
 local addonName, addon = ...
 local mod = addon:NewModule("Cooldowns", "AceEvent-3.0", "LibMovable-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
+local LibPlayerSpells = LibStub("LibPlayerSpells-1.0")
 
 --------------------------------------------------------------------------------
 -- Consts and upvalues
@@ -120,6 +121,12 @@ function mod:UpdateEnabledState(event)
 	local petSpells = wipe(self.petSpells)
 
 	if addon.db.profile.modules[self.name] then
+		for spellID in LibPlayerSpells:IterateSpells(playerClass..' RACIAL TRADESKILL', 'COOLDOWN') do
+			if Spellbook:IsKnown(spellID) then
+				self:Debug('Watching ', GetSpellLink(spellID), 'according to LibPlayerSpells')
+				spells[spellID] = true
+			end
+		end
 		MergeSpells(spells, 'COMMON')
 		MergeSpells(spells, playerClass)
 		for id, name in Spellbook:IterateSpells(BOOKTYPE_PET) do
@@ -442,45 +449,6 @@ end
 --------------------------------------------------------------------------------
 
 COOLDOWNS = {
-	COMMON = {
-		-- Lifeblood (9 ranks)
-		[ 81780] = true,
-		[ 55428] = true,
-		[ 55480] = true,
-		[ 55500] = true,
-		[ 55501] = true,
-		[ 55502] = true,
-		[ 55503] = true,
-		[ 74497] = true,
-		[121279] = true,
-		-- Racial traits
-		[ 28730] = true, -- Arcane Torrent (mana)
-		[ 50613] = true, -- Arcane Torrent (runic power)
-		[ 80483] = true, -- Arcane Torrent (focus)
-		[ 25046] = true, -- Arcane Torrent (energy)
-		[ 69179] = true, -- Arcane Torrent (rage)
-		[ 26297] = true, -- Berseking
-		[ 20542] = true, -- Blood Fury (attack power)
-		[ 33702] = true, -- Blood Fury (spell power)
-		[ 33697] = true, -- Blood Fury (both)
-		[ 68992] = true, -- Darkflight
-		[ 20589] = true, -- Escape Artist
-		[ 59752] = true, -- Every Man for Himself
-		[ 69041] = true, -- Rocket Barrage
-		[ 69070] = true, -- Rocket Jump
-		[ 58984] = true, -- Shadowmeld
-		[ 20594] = true, -- Stoneform
-		[ 20549] = true, -- War Stomp
-		[  7744] = true, -- Will of the Forsaken
-		[ 59545] = true, -- Gift of the Naaru
-		[ 59543] = true, -- Gift of the Naaru
-		[ 59548] = true, -- Gift of the Naaru
-		[ 59542] = true, -- Gift of the Naaru
-		[ 59544] = true, -- Gift of the Naaru
-		[ 59547] = true, -- Gift of the Naaru
-		[ 28880] = true, -- Gift of the Naaru
-		[107079] = true, -- Quaking Palm
-	},
 	DRUID = {
 		[ 29166] = true, -- Innervate
 		[ 22812] = true, -- Barkskin
@@ -583,31 +551,6 @@ COOLDOWNS = {
 		[ 80240] = true, -- Havoc
 		[113858] = true, -- Dark Soul: Instability
 		[120451] = true, -- Flames of Xororth
-	},
-	MONK = {
-		[109132] = true, -- Roll
-		[115072] = true, -- Expel Harm
-		[115098] = true, -- Chi Wave
-		[116705] = true, -- Spear Hand Strike
-		[121827] = true, -- Roll modified by Celerity
-		-- Brewmaster
-		[115176] = true, -- Zen Meditation
-		[115203] = true, -- Fortifying Brew
-		[115213] = true, -- Avert Harm
-		[115295] = true, -- Guard
-		[115315] = true, -- Summon Black Ox Statue
-		[121253] = true, -- Keg Smash
-		-- Mistweaver
-		[115151] = true, -- Renewing Mist
-		[115310] = true, -- Revival
-		[115313] = true, -- Summon Jade Serpent Statue
-		[115450] = true, -- Detox
-		[115451] = true, -- Internal Medicine
-		[116680] = true, -- Thunder Focus Tea
-		[116849] = true, -- Life Cocoon
-		-- Windwalker
-		[113656] = true, -- Fists of Fury
-		[122470] = true, -- Touch of Karma
 	},
 	PRIEST = {
 		[   527] = true, -- Purify

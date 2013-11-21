@@ -23,6 +23,7 @@ local addonName, addon = ...
 
 local mod = addon:NewModule("Auras", "AceEvent-3.0", "LibMovable-1.0", "LibSpellWidget-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
+local LibPlayerSpells = LibStub("LibPlayerSpells-1.0")
 
 local rules, spells
 function mod:BuildRules()
@@ -132,12 +133,19 @@ function mod:BuildRules()
 				return callback(115295, select(15, UnitBuff(unit, guard)), duration, expirationTime)
 			end
 		end)
-
 	elseif class == 'PRIEST' then
 		AddPlayerBuff(123254, 109142) -- Twist of Fate
 		AddPlayerBuff( 52798) -- Borrowed Time
 		AddPlayerBuff(109964) -- Spirit Shell
 		AddPlayerBuff( 81700) -- Archangel
+	end
+
+	-- Spells according to LibPlayerSpells
+	for buff, flags, provider in LibPlayerSpells:IterateSpells('SURVIVAL BURST', class..' PERSONAL AURA') do
+		--@debug@
+		self:Debug('LibPlayerSpells', GetSpellLink(provider), '=>', (GetSpellLink(buff)))
+		--@end-debug@
+		AddPlayerBuff(buff, provider)
 	end
 
 	-- Haste cooldowns
