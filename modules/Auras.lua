@@ -24,96 +24,127 @@ local addonName, addon = ...
 local mod = addon:NewModule("Auras", "AceEvent-3.0", "LibMovable-1.0", "LibSpellWidget-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
 
-local GetWatchers
-GetWatchers = function()
-	local aurasToWatch = {}
-
-	-- Initialize once
-	GetWatchers = function() return aurasToWatch end
+local rules, spells
+function mod:BuildRules()
+	if rules then return end
+	self:Debug('Building rules')
+	rules, spells = {}, {}
 
 	local _, class = UnitClass('player')
 
-	-- Helper
-	local function OwnAuraGetter(spell, important, harmful)
-		local name = GetSpellInfo(spell)
-		if not name then
-			geterrorhandler()("Unknown spell id", spell)
-			return function() end
+	local function AddRule(unit, buff, provider, handler, desc)
+		if buff and spells[buff] then
+			self:Debug('Avoiding duplication of rule for', desc)
+			return
 		end
-		local filter = "PLAYER|" .. (harmful and "HARMFUL" or "HELPFUL")
-		return function(unit, id, callback)
-			local name, _, _, count, _, duration, expirationTime = UnitAura(unit, name, nil, filter)
-			if name then
-				return callback(spell, count, duration, expirationTime, important)
+		if not desc then
+			local name, _, texture = GetSpellInfo(buff or provider)
+			desc = name and format("|T%s:24|t %s", texture, name) or "something"
+		end
+		if not rules[unit] then
+			self:Debug('Has rules for', unit)
+			rules[unit] = {}
+		end
+		tinsert(rules[unit], function(allowed)
+			if provider and not Spellbook:IsKnown(provider) then
+				--@debug@
+				self:Debug('Not watching for', desc, 'because', GetSpellLink(provider), 'is unknown')
+				--@end-debug@
+			elseif buff and not allowed[buff] then
+				--@debug@
+				self:Debug('Not watching for', desc, 'because it is disabled')
+				--@end-debug@
+			else
+				--@debug@
+				self:Debug('Watching for', desc)
+				--@end-debug@
+				return handler
 			end
+		end)
+		if buff and desc then
+			spells[buff] = desc
 		end
 	end
 
-	-- Callback signature : spell, count, duration, expires = callback(unit, id)
+	local function AddPlayerBuff(buff, provider, important, harmful)
+		local filter = "PLAYER|" .. (harmful and "HARMFUL" or "HELPFUL")
+		AddRule(
+			"player",
+			buff,
+			provider or buff,
+			function(unit, callback)
+				for index = 1, math.huge do
+					local name, _, _, count, _, duration, expirationTime, _, _, _, spellId = UnitAura(unit, index, nil, filter)
+					if name then
+						if spellId == buff then
+							callback(buff, count, duration, expirationTime, important)
+							return
+						end
+					else
+						return
+					end
+				end
+			end
+		)
+	end
+
 	if class == 'HUNTER' then
-		aurasToWatch.player = {
-			[ 19263] = OwnAuraGetter( 19263), -- Deterrence
-			[ 34477] = OwnAuraGetter( 34477), -- Misdirection
-			[ 53224] = OwnAuraGetter( 53224), -- Improved Steady Shot
-			[  3045] = OwnAuraGetter(  3045), -- Rapid Fire
-		}
+		AddPlayerBuff( 19263) -- Deterrence
+		AddPlayerBuff(148467) -- Deterrence (talented)
+		AddPlayerBuff( 34477) -- Misdirection
+		AddPlayerBuff( 53224) -- Improved Steady Shot
+		AddPlayerBuff(  3045) -- Rapid Fire
 	elseif class == 'DRUID' then
-		aurasToWatch.player = {
-			[ 22812] = OwnAuraGetter( 22812), -- Barkskin
-			[ 29166] = OwnAuraGetter( 29166), -- Innervate
-			[ 33886] = OwnAuraGetter( 96206), -- Swift Rejuvenation
-			[ 77495] = OwnAuraGetter(100977), -- Mastery: Harmony => Harmony
-			[106922] = OwnAuraGetter(106922), -- Might of Ursoc
-			[114107] = OwnAuraGetter(114107), -- Soul of the Forest
-			[124974] = OwnAuraGetter(124974), -- Nature's Vigil
-			[108373] = OwnAuraGetter(145152), -- Dream of Cenarius (feral)
-		}
+		AddPlayerBuff( 22812) -- Barkskin
+		AddPlayerBuff( 29166) -- Innervate
+		AddPlayerBuff( 33886) -- Swift Rejuvenation
+		AddPlayerBuff( 77495, 100977) -- Harmony <= Mastery: Harmony
+		AddPlayerBuff(106922) -- Might of Ursoc
+		AddPlayerBuff(114107) -- Soul of the Forest
+		AddPlayerBuff(124974) -- Nature's Vigil
+		AddPlayerBuff(145152, 108373) -- Dream of Cenarius (feral)
 	elseif class == 'WARLOCK' then
-		aurasToWatch.player = {
-			[113858] = OwnAuraGetter(113858), -- Dark Soul: Instability
-			[113860] = OwnAuraGetter(113860), -- Dark Soul: Misery
-			[113861] = OwnAuraGetter(113861), -- Dark Soul: Knowledge
-			[ 80240] = OwnAuraGetter( 80240), -- Havoc
-			[104773] = OwnAuraGetter(104773), -- Unending Resolve
-			[119839] = OwnAuraGetter(119839), -- Fury Ward (Dark Apotheosis)
-			[132413] = OwnAuraGetter(132413), -- Shadow Bulwark (Grimoire of Sacrifice)
-		}
+		AddPlayerBuff(113858) -- Dark Soul: Instability
+		AddPlayerBuff(113860) -- Dark Soul: Misery
+		AddPlayerBuff(113861) -- Dark Soul: Knowledge
+		AddPlayerBuff( 80240) -- Havoc
+		AddPlayerBuff(104773) -- Unending Resolve
+		AddPlayerBuff(119839) -- Fury Ward (Dark Apotheosis)
+		AddPlayerBuff(132413) -- Shadow Bulwark (Grimoire of Sacrifice)
 	elseif class == 'MONK' then
+		AddPlayerBuff( 115203) -- Fortifying Brew
+
+		-- Stagger
 		local staggerLevels = {
 			[124273] = GetSpellInfo(124273),
 			[124274] = GetSpellInfo(124274),
 			[124275] = GetSpellInfo(124275)
 		}
+		AddRule("player", 115069, 115069, function(unit, callback)
+			for spell, name in pairs(staggerLevels) do
+				if UnitDebuff(unit, name) then
+					return callback(spell, select(15, UnitDebuff(unit, name)), 0, 0)
+				end
+			end
+		end)
+
 		local guard = GetSpellInfo(115295)
-		aurasToWatch.player = {
-			-- Stagger is provided by the Stance of the Sturdy Ox
-			[115069] = function(unit, id, callback)
-				for spell, name in pairs(staggerLevels) do
-					if UnitDebuff(unit, name) then
-						return callback(spell, select(15, UnitDebuff(unit, name)), 0, 0)
-					end
-				end
-			end,
-			[115203] = OwnAuraGetter(115203), -- Fortifying Brew
-			[115295] = function(unit, id, callback) -- Guard
-				local name, _, _, count, _, duration, expirationTime = UnitBuff(unit, guard)
-				if name then
-					return callback(115295, select(15, UnitBuff(unit, guard)), duration, expirationTime)
-				end
-			end,
-		}
+		AddRule("player", 115295, 115295, function(unit, callback)
+			local name, _, _, count, _, duration, expirationTime = UnitBuff(unit, guard)
+			if name then
+				return callback(115295, select(15, UnitBuff(unit, guard)), duration, expirationTime)
+			end
+		end)
+
 	elseif class == 'PRIEST' then
-		aurasToWatch.player = {
-			[109142] = OwnAuraGetter(123254), -- Twist of Fate
-			[ 52798] = OwnAuraGetter( 52798), -- Borrowed Time
-			[109964] = OwnAuraGetter(109964), -- Spirit Shell
-			[ 81700] = OwnAuraGetter( 81700), -- Archangel
-		}
-	else
-		aurasToWatch.player = {}
+		AddPlayerBuff(123254, 109142) -- Twist of Fate
+		AddPlayerBuff( 52798) -- Borrowed Time
+		AddPlayerBuff(109964) -- Spirit Shell
+		AddPlayerBuff( 81700) -- Archangel
 	end
 
 	-- Haste cooldowns
+	local factionBurst = UnitFactionGroup("player") == "Horde" and 2825 or 32182
 	local hasteCooldowns = {}
 	for i, id in ipairs {
 		  2825, -- Bloodlust
@@ -129,17 +160,17 @@ GetWatchers = function()
 			geterrorhandler()("Spell not found: "..id)
 		end
 	end
-	aurasToWatch.player[-1] = function(unit, id, callback)
+	AddRule("player", factionBurst, nil, function(unit, callback)
 		for i, name in ipairs(hasteCooldowns) do
 			local found, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, name)
 			if found then
 				return callback(spell, count, duration, expirationTime, true)
 			end
 		end
-	end
+	end)
 
 	-- Encounter debuffs
-	aurasToWatch.player[-2] = function(unit, id, callback)
+	AddRule("player", -1, nil, function(unit, callback)
 		for index = 1, 128 do
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell, _, isBossDebuff = UnitDebuff(unit, index)
 			if name then
@@ -150,11 +181,11 @@ GetWatchers = function()
 				return
 			end
 		end
-	end
+	end, "Encounter debuffs")
 
 	-- Item buffs
 	local LibItemBuffs = LibStub("LibItemBuffs-1.0")
-	aurasToWatch.player[-3] = function(unit, id, callback)
+	AddRule("player", -2, nil, function(unit, callback)
 		for index = 1, 128 do
 			local name, _, _, count, _, duration, expirationTime, _, _, _, spell = UnitBuff(unit, index)
 			if name then
@@ -165,9 +196,7 @@ GetWatchers = function()
 				return
 			end
 		end
-	end
-
-	return aurasToWatch
+	end, "Items")
 end
 
 local prefs
@@ -185,7 +214,7 @@ local DEFAULT_SETTINGS = {
 	}
 }
 
-local watchers = {}
+local handlers = {}
 local widgets = {}
 local pool = {}
 local gen = 0
@@ -209,15 +238,21 @@ function mod:OnEnable()
 	end
 
 	self.frame:SetAlpha(prefs.alpha)
-	self:RegisterEvent('PLAYER_ENTERING_WORLD', 'UpdateAll')
-	Spellbook.RegisterCallback(self, "LibSpellbook_Spells_Changed", "UpdateSpells")
-
-	self:UpdateSpells('OnEnable')
+	Spellbook.RegisterCallback(self, "LibSpellbook_Spells_Changed")
+	if self.hasSpells then
+		self:UpdateSpells('OnEnable')
+	end
 end
 
 function mod:OnDisable()
 	self.frame:Hide()
 	Spellbook.UnregisterAllCallbacks(self)
+end
+
+function mod:LibSpellbook_Spells_Changed(event)
+	self.hasSpells = true
+	self:BuildRules()
+	self:UpdateSpells(event)
 end
 
 --------------------------------------------------------------------------------
@@ -391,15 +426,12 @@ end
 --------------------------------------------------------------------------------
 
 function mod:Update(event, unit)
-	if not watchers[unit] then return end
-	local allowed = self.db.class.spells
+	if not handlers[unit] then return end
 	self:Debug('Update', event, unit)
 
 	gen = (gen + 1) % 10000
-	for id, callback in pairs(watchers[unit]) do
-		if allowed[id] then
-			callback(unit, id, ReuseOrSpawnWidget)
-		end
+	for i, handler in ipairs(handlers[unit]) do
+		handler(unit, ReuseOrSpawnWidget)
 	end
 	for spell, widget in pairs(widgets) do
 		if widget.gen ~= gen then
@@ -411,7 +443,7 @@ function mod:Update(event, unit)
 end
 
 function mod:UpdateAll(event)
-	for unit in pairs(watchers) do
+	for unit in pairs(handlers) do
 		self:Update(event, unit)
 	end
 end
@@ -435,39 +467,42 @@ function mod:UNIT_PET(event, unit)
 end
 
 function mod:UpdateSpells(event)
-	for unit, spells in pairs(GetWatchers()) do
-		for id, callback in pairs(spells) do
-			if id < 0 or Spellbook:IsKnown(id) then
-				if not watchers[unit] then
+	local allowed = self.db.class.spells
+	for unit, unitRules in pairs(rules) do
+		for i, rule in ipairs(unitRules) do
+			local handler = rule(allowed)
+			if handler then
+				if not handlers[unit] then
 					self:Debug('Watching', unit, 'auras')
-					watchers[unit] = { [id] = callback }
+					handlers[unit] = { handler }
 				else
-					watchers[unit][id] = callback
+					tinsert(handlers[unit], handler)
 				end
-				self:Debug('Watching for', GetSpellInfo(id), '(#'..id..')', 'on', unit)
 			end
 		end
-		if watchers[unit] and not next(watchers[unit]) then
-			watchers[unit] = nil
+		if handlers[unit] and not next(handlers[unit]) then
+			handlers[unit] = nil
 		end
 	end
 
-	if next(watchers) then
+	if next(handlers) then
 		self:RegisterEvent('UNIT_AURA', 'Update')
+		self:RegisterEvent('PLAYER_ENTERING_WORLD', 'UpdateAll')
 	else
-		self:UnregisterEvent('UNIT_AURA', 'Update')
+		self:UnregisterEvent('UNIT_AURA')
+		self:UnregisterEvent('PLAYER_ENTERING_WORLD')
 	end
-	if watchers.target then
+	if handlers.target then
 		self:RegisterEvent('PLAYER_TARGET_CHANGED')
 	else
 		self:UnregisterEvent('PLAYER_TARGET_CHANGED')
 	end
-	if watchers.focus then
+	if handlers.focus then
 		self:RegisterEvent('PLAYER_FOCUS_CHANGED')
 	else
 		self:UnregisterEvent('PLAYER_FOCUS_CHANGED')
 	end
-	if watchers.pet then
+	if handlers.pet then
 		self:RegisterEvent('UNIT_PET')
 	else
 		self:UnregisterEvent('UNIT_PET')
@@ -482,8 +517,8 @@ function mod:OnConfigChanged()
 		frame:SetAlpha(prefs.alpha)
 		self:Layout()
 	end
-	if self:IsEnabled() then
-		self:Update('OnConfigChanged')
+	if self:IsEnabled() and self.hasSpells then
+		self:UpdateSpells('OnConfigChanged')
 	end
 end
 
@@ -500,27 +535,14 @@ function mod:GetOptions()
 				name = L['Spells'],
 				type = 'multiselect',
 				values = function()
-					wipe(spellList)
-					for unit, spells in pairs(GetWatchers()) do
-						for id, callback in pairs(spells) do
-							local realId = id
-							if id == -1 then
-								realId = UnitFactionGroup("player") == "Horde" and 2825 or 32182
-							end
-							if realId > 0 then
-								local name, _, texture = GetSpellInfo(realId)
-								spellList[id] = format("|T%s:24|t %s", texture, name)
-							end
-						end
-					end
-					return spellList
+					return spells or {}
 				end,
-				get = function(_, id)
-					return self.db.class.spells[id]
+				get = function(_, key)
+					return self.db.class.spells[key]
 				end,
-				set = function(_, id, enable)
-					self.db.class.spells[id] = enable
-					self:UpdateAll('OnConfigChanged')
+				set = function(_, key, enable)
+					self.db.class.spells[key] = enable
+					self:UpdateSpells('OnConfigChanged')
 				end,
 				order = 10,
 			},
