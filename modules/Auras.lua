@@ -30,6 +30,7 @@ function mod:BuildRules()
 	self:Debug('Building rules')
 	rules, spells = {}, {}
 
+	local IconLine = addon.IconLine
 	local _, class = UnitClass('player')
 
 	local function AddRule(unit, buff, provider, handler, desc)
@@ -39,7 +40,7 @@ function mod:BuildRules()
 		end
 		if not desc then
 			local name, _, texture = GetSpellInfo(buff or provider)
-			desc = name and format("|T%s:24|t %s", texture, name) or "something"
+			desc = name and addon.IconLine(texture, name) or "something"
 		end
 		if not rules[unit] then
 			self:Debug('Has rules for', unit)
@@ -181,7 +182,7 @@ function mod:BuildRules()
 				return
 			end
 		end
-	end, "Encounter debuffs")
+	end, IconLine([[Interface\Icons\Ability_Creature_Cursed_02]], "Encounter debuffs"))
 
 	-- Item buffs
 	local LibItemBuffs = LibStub("LibItemBuffs-1.0")
@@ -196,7 +197,7 @@ function mod:BuildRules()
 				return
 			end
 		end
-	end, "Items")
+	end, IconLine([[Interface\Icons\ACHIEVEMENT_GUILDPERK_CHUG A LUG]], "Item buffs"))
 end
 
 local prefs
