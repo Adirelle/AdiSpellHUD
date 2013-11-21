@@ -86,13 +86,7 @@ function mod:BuildRules()
 		)
 	end
 
-	if class == 'HUNTER' then
-		AddPlayerBuff( 19263) -- Deterrence
-		AddPlayerBuff(148467) -- Deterrence (talented)
-		AddPlayerBuff( 34477) -- Misdirection
-		AddPlayerBuff( 53224) -- Improved Steady Shot
-		AddPlayerBuff(  3045) -- Rapid Fire
-	elseif class == 'DRUID' then
+	if class == 'DRUID' then
 		AddPlayerBuff( 22812) -- Barkskin
 		AddPlayerBuff( 29166) -- Innervate
 		AddPlayerBuff( 33886) -- Swift Rejuvenation
