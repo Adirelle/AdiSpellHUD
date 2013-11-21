@@ -34,10 +34,6 @@ function mod:BuildRules()
 	local _, class = UnitClass('player')
 
 	local function AddRule(unit, buff, provider, handler, desc)
-		if buff and spells[buff] then
-			self:Debug('Avoiding duplication of rule for', desc)
-			return
-		end
 		if not desc then
 			local name, _, texture = GetSpellInfo(buff or provider)
 			desc = name and addon.IconLine(texture, name) or "something"
