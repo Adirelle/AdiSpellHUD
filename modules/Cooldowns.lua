@@ -357,7 +357,7 @@ function mod:GetOptions()
 		wipe(values)
 		for id in pairs(self.cooldownsToWatch[model]) do
 			local name, texture = GetInfo(id)
-			values[id] = format("|T%s:24|t %s", texture, name)
+			values[id] = addon.IconLine(texture, name)
 		end
 		return values
 	end
