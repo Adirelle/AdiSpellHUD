@@ -86,16 +86,7 @@ function mod:BuildRules()
 		)
 	end
 
-	if class == 'DRUID' then
-		AddPlayerBuff( 22812) -- Barkskin
-		AddPlayerBuff( 29166) -- Innervate
-		AddPlayerBuff( 33886) -- Swift Rejuvenation
-		AddPlayerBuff( 77495, 100977) -- Harmony <= Mastery: Harmony
-		AddPlayerBuff(106922) -- Might of Ursoc
-		AddPlayerBuff(114107) -- Soul of the Forest
-		AddPlayerBuff(124974) -- Nature's Vigil
-		AddPlayerBuff(145152, 108373) -- Dream of Cenarius (feral)
-	elseif class == 'WARLOCK' then
+	if class == 'WARLOCK' then
 		AddPlayerBuff(113858) -- Dark Soul: Instability
 		AddPlayerBuff(113860) -- Dark Soul: Misery
 		AddPlayerBuff(113861) -- Dark Soul: Knowledge
@@ -104,8 +95,6 @@ function mod:BuildRules()
 		AddPlayerBuff(119839) -- Fury Ward (Dark Apotheosis)
 		AddPlayerBuff(132413) -- Shadow Bulwark (Grimoire of Sacrifice)
 	elseif class == 'MONK' then
-		AddPlayerBuff( 115203) -- Fortifying Brew
-
 		-- Stagger
 		local staggerLevels = {
 			[124273] = GetSpellInfo(124273),
