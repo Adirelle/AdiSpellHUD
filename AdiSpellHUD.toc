@@ -28,6 +28,7 @@ libs\LibMovable-1.0\LibMovable-1.0.lua
 libs\LibSpellWidget-1.0\lib.xml
 libs\LibSpellbook-1.0\LibSpellbook-1.0.lua
 libs\LibItemBuffs-1.0\LibItemBuffs-1.0.xml
+libs\LibPlayerSpells-1.0\lib.xml
 
 Localization.lua
 AdiSpellHUD.lua
