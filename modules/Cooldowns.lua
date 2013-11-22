@@ -449,42 +449,6 @@ end
 --------------------------------------------------------------------------------
 
 COOLDOWNS = {
-	DRUID = {
-		[ 29166] = true, -- Innervate
-		[ 22812] = true, -- Barkskin
-		[ 20484] = true, -- Rebirth
-		[   740] = true, -- Tranquility
-		[   467] = true, -- Thorns
-		[  1850] = true, -- Dash
-		[ 80964] = true, -- Skull Bash (bear)
-		[ 80965] = true, -- Skull Bash (cat)
-		[ 77761] = true, -- Stampeding Roar (bear)
-		[ 77764] = true, -- Stampeding Roar (cat)
-		[106898] = true, -- Stampeding Roar (human)
-		[ 22842] = true, -- Frenzied Regeneration
-		[ 88751] = true, -- Wild Mushroom: Detonate
-		[124974] = true, -- Nature's Vigil
-		[  2782] = true, -- Remove Corruption
-		-- Balance
-		[ 48505] = true, -- Starfall
-		[ 78675] = true, -- Solar Beam
-		[ 78674] = true, -- Starsurge
-		[ 33831] = true, -- Force of Nature
-		[ 50516] = true, -- Typhoon
-		-- Feral
-		[  5217] = true, -- Tiger's Fury
-		[ 61336] = true, -- Survival Instincts
-		[106951] = true, -- Berserk
-		[102543] = true, -- Incarnation: King of the Jungle
-		-- Guardian
-		-- Restoration
-		[ 33891] = true, -- Incarnation: Tree of Life
-		[ 18562] = true, -- Swiftmend
-		[ 17116] = true, -- Nature's Swiftness
-		[ 48438] = true, -- Wild Growth
-		[ 88423] = true, -- Nature's Cure
-		[122288] = true, -- Symbiosis: Cleanse
-	},
 	WARLOCK = {
 		[   755] = true, -- Glyphed Health Funnel
 		[  1122] = true, -- Summon Infernal
