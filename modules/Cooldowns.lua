@@ -449,41 +449,6 @@ end
 --------------------------------------------------------------------------------
 
 COOLDOWNS = {
-	WARLOCK = {
-		[   755] = true, -- Glyphed Health Funnel
-		[  1122] = true, -- Summon Infernal
-		[  5484] = true, -- Howl of Terror
-		[  6229] = true, -- Twilight Ward
-		[  6789] = true, -- Mortal Coil
-		[ 18540] = true, -- Summon Doomguard
-		[ 20707] = true, -- Soulstone
-		[ 29858] = true, -- Soulshatter
-		[ 30283] = true, -- Shadowfury
-		[ 47897] = true, -- Demonic Breath
-		[ 48020] = true, -- Demonic Circle: Teleport
-		[104773] = true, -- Unending Resolve
-		[108359] = true, -- Dark Regeneration
-		[108416] = true, -- Sacrificial Pact
-		[108482] = true, -- Unbound Will
-		[108501] = true, -- Grimore of Service
-		[110913] = true, -- Dark Bargain
-		[111397] = true, -- Blood Horror
-		[132411] = true, -- Singe Magic (sacrified Imp)
-		-- Affliction
-		-- Demonology
-		[119839] = true, -- Fury Ward (Dark Apotheosis)
-		[116198] = true, -- Aura of Enfeeblement (Metamorphosis/Dark Apotheosis)
-		[104025] = true, -- Immolation Aura (Metamorphosis/Dark Apotheosis)
-		[132413] = true, -- Shadow Bulwark (Grimoire of Sacrifice)
-		[113861] = true, -- Dark Soul: Knowledge
-		[114175] = true, -- Demonic Slash (Dark Apotheosis)
-		[105174] = true, -- Hand of Gul'dan
-		-- Destruction
-		[ 17962] = true, -- Conflagrate
-		[ 80240] = true, -- Havoc
-		[113858] = true, -- Dark Soul: Instability
-		[120451] = true, -- Flames of Xororth
-	},
 	PRIEST = {
 		[   527] = true, -- Purify
 		[  8122] = true, -- Psychic Scream

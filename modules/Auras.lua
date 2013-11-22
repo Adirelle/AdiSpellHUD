@@ -86,15 +86,7 @@ function mod:BuildRules()
 		)
 	end
 
-	if class == 'WARLOCK' then
-		AddPlayerBuff(113858) -- Dark Soul: Instability
-		AddPlayerBuff(113860) -- Dark Soul: Misery
-		AddPlayerBuff(113861) -- Dark Soul: Knowledge
-		AddPlayerBuff( 80240) -- Havoc
-		AddPlayerBuff(104773) -- Unending Resolve
-		AddPlayerBuff(119839) -- Fury Ward (Dark Apotheosis)
-		AddPlayerBuff(132413) -- Shadow Bulwark (Grimoire of Sacrifice)
-	elseif class == 'MONK' then
+	if class == 'MONK' then
 		-- Stagger
 		local staggerLevels = {
 			[124273] = GetSpellInfo(124273),
