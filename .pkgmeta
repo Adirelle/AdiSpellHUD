@@ -34,9 +34,5 @@ externals:
   libs/LibMovable-1.0:
     url: git://git.wowace.com/wow/libmovable-1-0/mainline.git
     tag: latest
-  libs/LibSpellbook-1.0:
-    url: git://github.com/Adirelle/LibSpellbook-1.0.git
-    tag: latest
-  libs/LibItemBuffs-1.0:
-    url: git://github.com/Adirelle/LibItemBuffs-1.0.git
-    tag: latest
+  libs/LibSpellbook-1.0: git://github.com/Adirelle/LibSpellbook-1.0.git
+  libs/LibItemBuffs-1.0: git://github.com/Adirelle/LibItemBuffs-1.0.git
