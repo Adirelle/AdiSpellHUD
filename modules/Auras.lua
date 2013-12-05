@@ -191,6 +191,7 @@ local DEFAULT_SETTINGS = {
 		ignoreOverlayed = true,
 		direction = "rightToLeft",
 		maxIcons = 16,
+		sortOrder = "expirationDesc",
 	},
 	class = {
 		spells = { ['*'] = true },
@@ -247,17 +248,30 @@ end
 -- Bar layout
 --------------------------------------------------------------------------------
 
+local comparators = {
+	startAsc = function(a, b)
+		return a.expires - a.duration < b.expires - b.duration
+	end,
+	startDesc = function(a, b)
+		return a.expires - a.duration > b.expires - b.duration
+	end,
+	durationDesc = function(a, b)
+		return a.duration > b.duration
+	end,
+	durationAsc = function(a, b)
+		return a.duration < b.duration
+	end,
+	expirationAsc = function(a, b)
+		return a.expires < b.expires
+	end,
+	expirationDesc = function(a, b)
+		return a.expires > b.expires
+	end,
+}
+
+local currentComparator = comparators.newestFirst
 local function CompareWidgets(a, b)
-	local a, b = a.spell, b.spell
-	if a.expires == b.expires then
-		if a.duration == b.duration then
-			return GetSpellInfo(a.spell) < GetSpellInfo(b.spell)
-		else
-			return b.duration < a.duration
-		end
-	else
-		return b.expires < a.expires
-	end
+	return currentComparator(a.spell, b.spell)
 end
 
 local directions = {
@@ -290,6 +304,7 @@ function mod:Layout()
 	for id, widget in pairs(widgets) do
 		tinsert(order, widget)
 	end
+	currentComparator = comparators[prefs.sortOrder]
 	table.sort(order, CompareWidgets)
 
 	dx, dy = dx*prefs.spacing, dy*prefs.spacing
@@ -608,10 +623,24 @@ function mod:GetOptions()
 				name = L['Maximum number of icons'],
 				desc = L['Do not show more than this number of icons.'],
 				type = 'range',
+				order = 57,
 				min = 1,
 				max = 64,
 				softMax = 16,
 				step = 1,
+			},
+			sortOrder = {
+				name = L['Ordering'],
+				type = 'select',
+				order = 58,
+				values = {
+					startAsc       = L["Oldest first"],
+					startDesc      = L["Newest first"],
+					durationDesc   = L["Longest first"],
+					durationAsc    = L["Shortest first"],
+					expirationAsc  = L[d"First to expire first"],
+					expirationDesc = L["Last to expire first"],
+				},
 			},
 			animation = {
 				name = L['Animation'],
