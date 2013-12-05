@@ -189,6 +189,8 @@ local DEFAULT_SETTINGS = {
 		animation = true,
 		anchor = { },
 		ignoreOverlayed = true,
+		direction = "rightToLeft",
+		maxIcons = 16,
 	},
 	class = {
 		spells = { ['*'] = true },
@@ -215,7 +217,12 @@ function mod:OnEnable()
 		frame:SetClampedToScreen(true)
 		frame:SetSize(prefs.size, prefs.size)
 		self.frame = frame
-		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Auras"])
+
+		local anchor = CreateFrame("Frame", nil, frame)
+		anchor:SetSize(prefs.size, prefs.size)
+		self.anchor = anchor
+
+		self:RegisterMovable(frame, function() return self.db.profile.anchor end, addon.L[addonName.." Auras"], anchor)
 	end
 
 	self.frame:SetAlpha(prefs.alpha)
@@ -253,8 +260,25 @@ local function CompareWidgets(a, b)
 	end
 end
 
+local directions = {
+	--              from,     to,       dx, dy
+	rightToLeft = { "RIGHT",  "LEFT",   -1,  0 },
+	leftToRight = { "LEFT",   "RIGHT",   1,  0 },
+	topToBottom = { "TOP",    "BOTTOM",  0, -1 },
+	bottomToTop = { "BOTTOM", "TOP",     0,  1 },
+}
+
 local order = {}
 function mod:Layout()
+	local maxIcons, iconSize = prefs.maxIcons, prefs.size
+	local from, to, dx, dy = unpack(directions[prefs.direction])
+
+	local span = (iconSize+prefs.spacing)*(maxIcons-1)
+	local anchor = self.anchor
+	anchor:ClearAllPoints()
+	anchor:SetPoint(from)
+	anchor:SetSize(iconSize + math.abs(dx)*span, iconSize + math.abs(dy)*span)
+
 	if next(widgets) then
 		self.frame:Show()
 	else
@@ -268,14 +292,21 @@ function mod:Layout()
 	end
 	table.sort(order, CompareWidgets)
 
-	local iconSize = prefs.size
+	dx, dy = dx*prefs.spacing, dy*prefs.spacing
 	for i, widget in ipairs(order) do
 		widget:ClearAllPoints()
-		widget:SetSize(iconSize, iconSize)
-		if i == 1 then
-			widget:SetPoint('RIGHT', self.frame)
+		if i <= maxIcons then
+			self:Debug('Showing', i..'th', 'icons')
+			widget:SetSize(iconSize, iconSize)
+			if i == 1 then
+				widget:SetPoint(from, self.frame)
+			else
+				widget:SetPoint(from, order[i-1], to, dx, dy)
+			end
+			widget:Show()
 		else
-			widget:SetPoint('RIGHT', order[i-1], 'LEFT', -prefs.spacing, 0)
+			self:Debug('Ignoring', i..'th', 'icons')
+			widget:Hide()
 		end
 	end
 end
@@ -561,6 +592,26 @@ function mod:GetOptions()
 				max = 1.0,
 				step = 0.01,
 				bigStep = 0.1,
+			},
+			direction = {
+				name = L['Direction'],
+				type = 'select',
+				order = 55,
+				values = {
+					rightToLeft = L["Right to left"],
+					leftToRight = L["Left to right"],
+					topToBottom = L["Top to bottom"],
+					bottomToTop = L["Bottom to top"],
+				},
+			},
+			maxIcons = {
+				name = L['Maximum number of icons'],
+				desc = L['Do not show more than this number of icons.'],
+				type = 'range',
+				min = 1,
+				max = 64,
+				softMax = 16,
+				step = 1,
 			},
 			animation = {
 				name = L['Animation'],
