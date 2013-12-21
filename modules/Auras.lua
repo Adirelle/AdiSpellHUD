@@ -259,6 +259,7 @@ function mod:OnEnable()
 end
 
 function mod:OnDisable()
+	self:UnregisterAllEvents()
 	self.frame:Hide()
 	Spellbook.UnregisterAllCallbacks(self)
 end

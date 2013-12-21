@@ -236,6 +236,7 @@ function mod:OnEnable()
 end
 
 function mod:OnDisable()
+	self:UnregisterAllEvents()
 	self.timer:Hide()
 	self.frame:Hide()
 end

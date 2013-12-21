@@ -58,6 +58,16 @@ local DEFAULT_SETTINGS = {
 local prefs
 
 --------------------------------------------------------------------------------
+-- Event dispatching using CallbackHandler-1.0
+--------------------------------------------------------------------------------
+
+local events = LibStub('CallbackHandler-1.0'):New(addon, 'RegisterEvent', 'UnregisterEvent', 'UnregisterAllEvents')
+local eventFrame = CreateFrame("Frame")
+eventFrame:SetScript('OnEvent', function(_, ...) return events:Fire(...) end)
+function events:OnUsed(_, event) return eventFrame:RegisterEvent(event) end
+function events:OnUnused(_, event) return eventFrame:UnregisterEvent(event) end
+
+--------------------------------------------------------------------------------
 -- Initialization
 --------------------------------------------------------------------------------
 
@@ -112,7 +122,12 @@ end
 -- Module Prototype
 --------------------------------------------------------------------------------
 
-local moduleProto = { Debug = addon.Debug }
+local moduleProto = {
+	Debug = addon.Debug,
+	RegisterEvent = addon.RegisterEvent,
+	UnregisterEvent = addon.UnregisterEvent,
+	UnregisterAllEvents = addon.UnregisterAllEvents
+}
 addon:SetDefaultModulePrototype(moduleProto)
 
 function moduleProto:ShouldEnable()

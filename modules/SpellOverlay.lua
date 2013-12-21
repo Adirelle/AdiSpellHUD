@@ -75,6 +75,10 @@ function mod:OnEnable()
 	end
 end
 
+function mod:OnDisable()
+	self:UnregisterAllEvents()
+end
+
 function mod:GetOptions()
 	return {
 		args = {
