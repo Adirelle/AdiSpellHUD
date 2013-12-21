@@ -638,7 +638,7 @@ function mod:GetOptions()
 					startDesc      = L["Newest first"],
 					durationDesc   = L["Longest first"],
 					durationAsc    = L["Shortest first"],
-					expirationAsc  = L[d"First to expire first"],
+					expirationAsc  = L["First to expire first"],
 					expirationDesc = L["Last to expire first"],
 				},
 			},
