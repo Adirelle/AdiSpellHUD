@@ -73,8 +73,6 @@ function addon:OnInitialize()
 
 	LibStub('AceConfig-3.0'):RegisterOptionsTable(addonName, self.GetOptions)
 	self.blizPanel = LibStub('AceConfigDialog-3.0'):AddToBlizOptions(addonName, addonName)
-
-	self:RegisterChatCommand(addonName, "ChatCommand", true)
 end
 
 function addon:OnEnable()
@@ -96,6 +94,11 @@ end
 function addon:ChatCommand()
 	InterfaceOptionsFrame_OpenToCategory(self.blizPanel)
 end
+
+-- The slash command
+_G.SLASH_ADISPELLHUD1 = "/adispellhud"
+_G.SLASH_ADISPELLHUD2 = "/ash"
+_G.SlashCmdList["ADISPELLHUD"] = function(args) return addon:ChatCommand(args) end
 
 --------------------------------------------------------------------------------
 -- Helper
