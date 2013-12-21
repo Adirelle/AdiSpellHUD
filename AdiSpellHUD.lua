@@ -98,9 +98,6 @@ function addon:Reconfigure()
 	self:Enable()
 end
 
-function addon:OnConfigChanged()
-end
-
 function addon:ChatCommand()
 	InterfaceOptionsFrame_OpenToCategory(self.blizPanel)
 end
