@@ -94,7 +94,7 @@ addon.DecorateOptions = DecorateOptions
 local options
 function addon.GetOptions()
 	if options then return options end
-	
+
 	local self = addon
 
 	local profileOpts = LibStub('AceDBOptions-3.0'):GetOptionsTable(self.db)
@@ -103,21 +103,16 @@ function addon.GetOptions()
 
 	options = DecorateOptions(self, {
 		name = format("%s v%s", addonName, GetAddOnMetadata(addonName, "Version")),
+		childGroups = 'tab',
 		args = {
 			enabled = false, -- bogus entry to prevent the decorator to add one
-			general = {
-				name = L['General'],
-				type = 'group',
-				order = 1,
-				args = {
-				}
-			},
 			profiles = profileOpts,
 		}
 	})
-	
+
+	-- Remove the bogus entry
 	options.args.enabled = nil
-	
+
 	for name, module in self:IterateModules() do
 		if module.GetOptions then
 			local modOptions = DecorateOptions(module, module:GetOptions())
@@ -125,7 +120,7 @@ function addon.GetOptions()
 			module.GetOptions = nil
 		end
 	end
-	
+
 	return options
 end
 
