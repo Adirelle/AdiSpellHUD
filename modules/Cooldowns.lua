@@ -19,7 +19,34 @@ You should have received a copy of the GNU General Public License
 along with AdiSpellHUD.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
+local _G = _G
+local BOOKTYPE_PET = _G.BOOKTYPE_PET
+local CreateFrame = _G.CreateFrame
+local GetInventoryItemID = _G.GetInventoryItemID
+local GetItemCooldown = _G.GetItemCooldown
+local GetItemInfo = _G.GetItemInfo
+local GetItemSpell = _G.GetItemSpell
+local GetSpellAutocast = _G.GetSpellAutocast
+local GetSpellCooldown = _G.GetSpellCooldown
+local GetSpellInfo = _G.GetSpellInfo
+local GetSpellLink = _G.GetSpellLink
+local GetTime = _G.GetTime
+local IsPassiveSpell = _G.IsPassiveSpell
+local UIParent = _G.UIParent
+local UnitClass = _G.UnitClass
+local UnitName = _G.UnitName
+local format = _G.format
+local huge = _G.math.huge
+local max = _G.max
+local min = _G.min
+local next = _G.next
+local pairs = _G.pairs
+local random = _G.math.random
+local select = _G.select
+local wipe = _G.wipe
+
 local addonName, addon = ...
+
 local mod = addon:NewModule("Cooldowns", "AceEvent-3.0", "LibMovable-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
 local LibPlayerSpells = LibStub("LibPlayerSpells-1.0")
@@ -134,7 +161,7 @@ function mod:UpdateEnabledState(event)
 			if not IsPassiveSpell(id) then
 				self:Debug('Watch for pet spell', name)
 				spells[id] = true
-				petSpells[id] = index
+				petSpells[id] = true
 			end
 		end
 		for index = 1, 18 do
@@ -232,7 +259,7 @@ function mod:Update(silent)
 	if not self.timer then return end
 	--self:Debug("Update", silent)
 	self.needUpdate = nil
-	local nextCheck = math.huge
+	local nextCheck = huge
 	local now = GetTime()
 	local minDuration = prefs.minDuration
 	local running = self.runningCooldowns
@@ -253,7 +280,7 @@ function mod:Update(silent)
 			end
 		end
 	end
-	if nextCheck > 0 and nextCheck < math.huge then
+	if nextCheck > 0 and nextCheck < huge then
 		self.delay = nextCheck + 0.1
 		self:Debug('Next update in', self.delay)
 		self.timer:Show()
@@ -421,7 +448,7 @@ function mod:GetOptions()
 				type = 'execute',
 				order = 60,
 				func = function()
-					local i = math.random(1, 8)
+					local i = _G.math.random(1, 8)
 					mod:ShowCooldownReset(-i, format([[Interface\Icons\INV_Misc_Gear_%02d]], i))
 				end,
 				disabled = function() return not mod:IsEnabled() end,

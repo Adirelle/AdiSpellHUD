@@ -21,10 +21,15 @@ along with AdiSpellHUD.  If not, see <http://www.gnu.org/licenses/>.
 
 local _G = _G
 local CreateFrame = _G.CreateFrame
-local pairs, wipe, min, max, next = _G.pairs, _G.wipe, _G.min, _G.max, _G.next
-local tinsert, tDeleteItem = _G.tinsert, _G.tDeleteItem
-local UnitBuff, GetTime = _G.UnitBuff, _G.GetTime
-local huge, sin, pi = _G.math.huge, _G.math.sin, _G.math.pi
+local GetTime = _G.GetTime
+local UnitBuff = _G.UnitBuff
+local max = _G.max
+local min = _G.min
+local pi = _G.math.pi
+local setmetatable = _G.setmetatable
+local sin = _G.sin
+local tDeleteItem = _G.tDeleteItem
+local tinsert = _G.tinsert
 
 local addonName, addon = ...
 local L = addon.L

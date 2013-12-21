@@ -19,6 +19,31 @@ You should have received a copy of the GNU General Public License
 along with AdiSpellHUD.  If not, see <http://www.gnu.org/licenses/>.
 --]]
 
+local _G = _G
+local CreateFrame = _G.CreateFrame
+local GetSpellInfo = _G.GetSpellInfo
+local GetSpellLink = _G.GetSpellLink
+local IsSpellOverlayed = _G.IsSpellOverlayed
+local UIParent = _G.UIParent
+local UnitAura = _G.UnitAura
+local UnitBuff = _G.UnitBuff
+local UnitClass = _G.UnitClass
+local UnitDebuff = _G.UnitDebuff
+local UnitFactionGroup = _G.UnitFactionGroup
+local abs = _G.math. abs
+local geterrorhandler = _G.geterrorhandler
+local huge = _G.math.huge
+local ipairs = _G.ipairs
+local next = _G.next
+local pairs = _G.pairs
+local select = _G.select
+local setmetatable = _G.setmetatable
+local sqrt = _G.math.sqrt
+local tinsert = _G.tinsert
+local tsort = _G.table.sort
+local unpack = _G.unpack
+local wipe = _G.wipe
+
 local addonName, addon = ...
 
 local mod = addon:NewModule("Auras", "AceEvent-3.0", "LibMovable-1.0", "LibSpellWidget-1.0")
@@ -71,7 +96,7 @@ function mod:BuildRules()
 			buff,
 			provider or buff,
 			function(unit, callback)
-				for index = 1, math.huge do
+				for index = 1, huge do
 					local name, _, _, count, _, duration, expirationTime, _, _, _, spellId = UnitAura(unit, index, nil, filter)
 					if name then
 						if spellId == buff then
@@ -291,7 +316,7 @@ function mod:Layout()
 	local anchor = self.anchor
 	anchor:ClearAllPoints()
 	anchor:SetPoint(from)
-	anchor:SetSize(iconSize + math.abs(dx)*span, iconSize + math.abs(dy)*span)
+	anchor:SetSize(iconSize + abs(dx)*span, iconSize + abs(dy)*span)
 
 	if next(widgets) then
 		self.frame:Show()
@@ -305,7 +330,7 @@ function mod:Layout()
 		tinsert(order, widget)
 	end
 	currentComparator = comparators[prefs.sortOrder]
-	table.sort(order, CompareWidgets)
+	tsort(order, CompareWidgets)
 
 	dx, dy = dx*prefs.spacing, dy*prefs.spacing
 	for i, widget in ipairs(order) do
@@ -396,7 +421,7 @@ function widgetProto:OnUpdate(elapsed)
 			prev.OnFinished(self)
 		end
 	else
-		local progress = math.sqrt(1 - (self.timeLeft / anim.duration))
+		local progress = sqrt(1 - (self.timeLeft / anim.duration))
 		anim.Update(self, progress)
 	end
 end
