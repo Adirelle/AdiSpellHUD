@@ -47,7 +47,7 @@ local wipe = _G.wipe
 
 local addonName, addon = ...
 
-local mod = addon:NewModule("Cooldowns", "AceEvent-3.0", "LibMovable-1.0")
+local mod = addon:NewModule("Cooldowns", "LibMovable-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
 local LibPlayerSpells = LibStub("LibPlayerSpells-1.0")
 
