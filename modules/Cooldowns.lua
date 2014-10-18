@@ -148,7 +148,7 @@ function mod:UpdateEnabledState(event)
 	local petSpells = wipe(self.petSpells)
 
 	if addon.db.profile.modules[self.name] then
-		for spellID in LibPlayerSpells:IterateSpells(playerClass..' RACIAL TRADESKILL', 'COOLDOWN') do
+		for spellID in LibPlayerSpells:IterateSpells(playerClass..' RACIAL', 'COOLDOWN') do
 			if Spellbook:IsKnown(spellID) then
 				self:Debug('Watching ', GetSpellLink(spellID), 'according to LibPlayerSpells')
 				spells[spellID] = true
