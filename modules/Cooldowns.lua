@@ -139,6 +139,18 @@ local function MergeSpells(spells, key)
 	end
 end
 
+local function IsAnyKnown(spellID)
+	if type(spellID) ~= "table" then
+		return Spellbook:IsKnown(spellID)
+	end
+	for _, id in pairs(spellID) do
+		if IsAnyKnown(id) then
+			return true
+		end
+	end
+	return false
+end
+
 local _, playerClass = UnitClass("player")
 function mod:UpdateEnabledState(event)
 	self:Debug('UpdateEnabledState', event)
@@ -148,10 +160,17 @@ function mod:UpdateEnabledState(event)
 	local petSpells = wipe(self.petSpells)
 
 	if addon.db.profile.modules[self.name] then
-		for spellID in LibPlayerSpells:IterateSpells(playerClass..' RACIAL', 'COOLDOWN') do
-			if Spellbook:IsKnown(spellID) then
-				self:Debug('Watching ', GetSpellLink(spellID), 'according to LibPlayerSpells')
-				spells[spellID] = true
+		for spellID, _, provider, modified in LibPlayerSpells:IterateSpells(playerClass..' RACIAL', 'COOLDOWN') do
+			if IsAnyKnown(provider) then
+				if type(modified) ~= "table" then
+					self:Debug('Watching ', GetSpellLink(modified), 'according to LibPlayerSpells')
+					spells[modified] = true
+				else
+					for _, spellID in ipairs(modified) do
+						self:Debug('Watching ', GetSpellLink(spellID), 'according to LibPlayerSpells')
+						spells[spellID] = true
+					end
+				end
 			end
 		end
 		MergeSpells(spells, 'COMMON')
