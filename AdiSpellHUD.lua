@@ -115,6 +115,18 @@ function addon.IconLine(texture, text)
 	return format("|T%s:20|t %s", texture, text)
 end
 
+function addon.IsSpellKnown(idOrTable)
+	if type(idOrTable) ~= "table" then
+		return IsPlayerSpell(idOrTable)
+	end
+	for i, id in ipairs(idOrTable) do
+		if IsPlayerSpell(id) then
+			return true
+		end
+	end
+	return false
+end
+
 --------------------------------------------------------------------------------
 -- Module Prototype
 --------------------------------------------------------------------------------

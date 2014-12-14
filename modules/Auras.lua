@@ -50,6 +50,8 @@ local mod = addon:NewModule("Auras", "LibMovable-1.0", "LibSpellWidget-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
 local LibPlayerSpells = LibStub("LibPlayerSpells-1.0")
 
+local IsSpellKnown = addon.IsSpellKnown
+
 local rules, spells
 function mod:BuildRules()
 	if rules then return end
@@ -69,7 +71,7 @@ function mod:BuildRules()
 			rules[unit] = {}
 		end
 		tinsert(rules[unit], function(allowed)
-			if provider and not Spellbook:IsKnown(provider) then
+			if provider and not IsSpellKnown(provider) then
 				--@debug@
 				self:Debug('Not watching for', desc, 'because', GetSpellLink(provider), 'is unknown')
 				--@end-debug@
@@ -220,6 +222,7 @@ local DEFAULT_SETTINGS = {
 	},
 	class = {
 		spells = { ['*'] = true },
+		customSpells = { },
 	}
 }
 

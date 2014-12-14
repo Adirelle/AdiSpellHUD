@@ -51,6 +51,8 @@ local mod = addon:NewModule("Cooldowns", "LibMovable-1.0")
 local Spellbook = LibStub("LibSpellbook-1.0")
 local LibPlayerSpells = LibStub("LibPlayerSpells-1.0")
 
+local IsSpellKnown = addon.IsSpellKnown
+
 --------------------------------------------------------------------------------
 -- Consts and upvalues
 --------------------------------------------------------------------------------
@@ -139,18 +141,6 @@ local function MergeSpells(spells, key)
 	end
 end
 
-local function IsAnyKnown(spellID)
-	if type(spellID) ~= "table" then
-		return Spellbook:IsKnown(spellID)
-	end
-	for _, id in pairs(spellID) do
-		if IsAnyKnown(id) then
-			return true
-		end
-	end
-	return false
-end
-
 local _, playerClass = UnitClass("player")
 function mod:UpdateEnabledState(event)
 	self:Debug('UpdateEnabledState', event)
@@ -161,7 +151,7 @@ function mod:UpdateEnabledState(event)
 
 	if addon.db.profile.modules[self.name] then
 		for spellID, _, provider, modified in LibPlayerSpells:IterateSpells(playerClass..' RACIAL', 'COOLDOWN') do
-			if IsAnyKnown(provider) then
+			if IsSpellKnown(provider) then
 				if type(modified) ~= "table" then
 					self:Debug('Watching ', GetSpellLink(modified), 'according to LibPlayerSpells')
 					spells[modified] = true
